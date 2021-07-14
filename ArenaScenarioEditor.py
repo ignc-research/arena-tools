@@ -406,7 +406,7 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         ## scrollarea
         self.obstacles_scrollarea = QtWidgets.QScrollArea(self)
         self.obstacles_scrollarea.setWidgetResizable(True)
-        self.obstacles_scrollarea.setMinimumWidth(400)
+        self.obstacles_scrollarea.setMinimumWidth(300)
         self.centralWidget().layout().addWidget(self.obstacles_scrollarea, 0, 0, -1, 1)
         ## frame
         self.obstacles_frame = QtWidgets.QFrame()
