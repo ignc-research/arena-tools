@@ -48,7 +48,7 @@ Click on the 'edit'-Button of the Body you want to edit. The Flatland Body Edito
 - Click on 'Add Polygon' to add a polygon footprint. A Footprint widget will be added on the left.
 - Delete polygon footprint by clicking on delete.
 - Edit the layers by writing them in the layers edit box. Layer names need to be separated by commas (e.g. like this: "layer1, layer2, layer3").
-- Increase or decreaser the number of vertices by clicking on + or -.
+- Increase or decrease the number of vertices by clicking on + or -.
 - Set position of the footprint by dragging it around in the scene.
 - Set position of each vertice by holding the mouse near the vertice (cursor should change) and dragging the vertice.
 - Save body by clicking 'Save and Close'
