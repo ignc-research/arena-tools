@@ -2,6 +2,7 @@
 A collection of tools to make working with [Arena-Rosnav](https://github.com/ignc-research/arena-rosnav/) easier. It currently includes:
 - Scenario Editor
 - Flatland Model Editor
+- Map Generator
 
 ## Prerequisites
 - Python 3.6 or higher
@@ -54,3 +55,13 @@ Click on the 'edit'-Button of the Body you want to edit. The Flatland Body Edito
 - Save body by clicking 'Save and Close'
 #### Circle Footprints
 Not yet implemented.
+
+## Map Generator
+Map Generator is a tool to generate random ROS maps. Run it using Python:
+```
+python MapGenerator.py
+```
+### Notes
+- Maps can be either an indoor or an outdoor type map. For **indoor** maps you can adjust the **Corridor With** and number of **Iterations**. For **outdoor** maps you can adjust the number of **Obstacles** and the **Obstacle Extra Radius**.
+- Generate maps in bulk by setting **Number of Maps**
+- Each map will be saved in its own folder. Folders will be named like "map[number]". [number] will be incremented starting from the highest number that already exists in the folder, so as not to overwrite any existing maps.
