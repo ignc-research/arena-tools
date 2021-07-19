@@ -34,7 +34,7 @@ class WaypointWidget(QtWidgets.QWidget):
         self.id = 0
         self.pedsimAgentWidget = pedsimAgentWidget  # needed so the ellipse item can trigger a waypoint path redraw
         # create circle and add to scene
-        self.ellipseItem = ArenaGraphicsEllipseItem(self, -0.25, -0.25, 0.5, 0.5)
+        self.ellipseItem = WaypointGraphicsEllipseItem(self, None, None, -0.25, -0.25, 0.5, 0.5)
         self.graphicsScene = graphicsScene
         graphicsScene.addItem(self.ellipseItem)
         # setup widgets
@@ -355,6 +355,99 @@ class PedsimAgentWidget(QtWidgets.QFrame):
         self.remove()
 
 
+
+class RobotAgentWidget(QtWidgets.QFrame):
+    '''
+    This is a row in the obstacles frame.
+    '''
+    def __init__(self, graphicsScene: QtWidgets.QGraphicsScene, graphicsView: ArenaQGraphicsView, **kwargs):
+        super().__init__(**kwargs)
+        self.graphicsScene = graphicsScene
+        self.graphicsView = graphicsView
+        self.draggingItem = False
+
+        self.setup_ui()
+
+        # create graphics items displayed in the scene
+        ## start pos
+        self.startGraphicsEllipseItem = ArenaGraphicsEllipseItem(self.startXSpinBox, self.startYSpinBox, -0.25, -0.25, 0.5, 0.5)
+        # set color
+        brush = QtGui.QBrush(QtGui.QColor("green"), QtCore.Qt.BrushStyle.SolidPattern)
+        self.startGraphicsEllipseItem.setBrush(brush)
+        # enable text next to item in scene
+        self.startGraphicsEllipseItem.enableTextItem(self.graphicsScene, "Robot")
+        # add to scene
+        self.graphicsScene.addItem(self.startGraphicsEllipseItem)
+
+        ## goal pos
+        self.goalGraphicsEllipseItem = ArenaGraphicsEllipseItem(self.goalXSpinBox, self.goalYSpinBox, -0.25, -0.25, 0.5, 0.5)
+        # set color
+        brush = QtGui.QBrush(QtGui.QColor("red"), QtCore.Qt.BrushStyle.SolidPattern)
+        self.goalGraphicsEllipseItem.setBrush(brush)
+        # enable text next to item in scene
+        self.goalGraphicsEllipseItem.enableTextItem(self.graphicsScene, "Goal")
+        # add to scene
+        self.graphicsScene.addItem(self.goalGraphicsEllipseItem)
+
+        # move start and goal positions a bit to make them not overlap
+        self.startXSpinBox.setValue(-3)
+        self.startYSpinBox.setValue(3)
+        self.goalXSpinBox.setValue(3)
+        self.goalYSpinBox.setValue(-3)
+        
+    def setup_ui(self):
+        self.setLayout(QtWidgets.QGridLayout())
+        self.setFrameStyle(QtWidgets.QFrame.Shape.Box | QtWidgets.QFrame.Shadow.Raised)
+        self.setStyleSheet("background-color: rgb(255, 255, 255);")
+
+        # name label
+        self.name_label = QtWidgets.QLabel("Robot")
+        self.layout().addWidget(self.name_label, 0, 0)
+
+        # start position
+        label = QtWidgets.QLabel("Start:")
+        self.layout().addWidget(label, 1, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
+        self.startXSpinBox = ArenaQDoubleSpinBox()
+        self.startXSpinBox.valueChanged.connect(self.updateGraphicsItemsFromSpinBoxes)
+        self.layout().addWidget(self.startXSpinBox, 1, 1)
+        self.startYSpinBox = ArenaQDoubleSpinBox()
+        self.startYSpinBox.valueChanged.connect(self.updateGraphicsItemsFromSpinBoxes)
+        self.layout().addWidget(self.startYSpinBox, 1, 2)
+
+        # goal position
+        label = QtWidgets.QLabel("Goal")
+        self.layout().addWidget(label, 2, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
+        self.goalXSpinBox = ArenaQDoubleSpinBox()
+        self.goalXSpinBox.valueChanged.connect(self.updateGraphicsItemsFromSpinBoxes)
+        self.layout().addWidget(self.goalXSpinBox, 2, 1)
+        self.goalYSpinBox = ArenaQDoubleSpinBox()
+        self.goalYSpinBox.valueChanged.connect(self.updateGraphicsItemsFromSpinBoxes)
+        self.layout().addWidget(self.goalYSpinBox, 2, 2)
+
+    def updateSpinBoxesFromGraphicsItems(self):
+        # start
+        new_pos = self.startGraphicsEllipseItem.mapToScene(self.startGraphicsEllipseItem.transformOriginPoint())
+        self.startXSpinBox.setValue(new_pos.x())
+        self.startYSpinBox.setValue(new_pos.y())
+        # goal
+        new_pos = self.goalGraphicsEllipseItem.mapToScene(self.goalGraphicsEllipseItem.transformOriginPoint())
+        self.goalXSpinBox.setValue(new_pos.x())
+        self.goalYSpinBox.setValue(new_pos.y())
+
+    def updateGraphicsItemsFromSpinBoxes(self):
+        # start
+        if not self.startGraphicsEllipseItem.isDragged:  # prevents recursive loop (spin box <-> moving item)
+            x = self.startXSpinBox.value()
+            y = self.startYSpinBox.value()
+            self.startGraphicsEllipseItem.setPosNoEvent(x, y)
+        # goal
+        if not self.goalGraphicsEllipseItem.isDragged:
+            x = self.goalXSpinBox.value()
+            y = self.goalYSpinBox.value()
+            self.goalGraphicsEllipseItem.setPosNoEvent(x, y)
+
+
+
 class ArenaScenarioEditor(QtWidgets.QMainWindow):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -381,7 +474,6 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         # menu bar
         menubar = self.menuBar()
         file_menu = menubar.addMenu("File")
-        file_menu.addAction("New Scenario", self.onNewScenarioClicked, "Ctrl+N")
         file_menu.addAction("Open...", self.onOpenClicked, "Ctrl+O")
         file_menu.addAction("Save", self.onSaveClicked, "Ctrl+S")
         file_menu.addAction("Save As...", self.onSaveAsClicked, "Ctrl+Shift+S")
@@ -413,6 +505,10 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         self.obstacles_frame.setLayout(QtWidgets.QVBoxLayout())
         self.obstacles_frame.setSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         self.obstacles_scrollarea.setWidget(self.obstacles_frame)
+
+        # always add robot agent
+        self.robotAgentWidget = RobotAgentWidget(self.gscene, self.gview)
+        self.obstacles_frame.layout().addWidget(self.robotAgentWidget)
 
     def onSetMapClicked(self):
         initial_folder = os.path.join(get_ros_package_path("simulator_setup"), "maps")
@@ -529,8 +625,11 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         # interactive obstacles
         # TODO
         # robot position
-        # TODO
+        self.robotAgentWidget.startXSpinBox.setValue(self.arenaScenario.robotPosition[0])
+        self.robotAgentWidget.startYSpinBox.setValue(self.arenaScenario.robotPosition[1])
         # robot goal
+        self.robotAgentWidget.goalXSpinBox.setValue(self.arenaScenario.robotGoal[0])
+        self.robotAgentWidget.goalYSpinBox.setValue(self.arenaScenario.robotGoal[1])
         # TODO
 
         # map
@@ -555,10 +654,15 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         if self.mapData != None:
             self.arenaScenario.mapPath = self.mapData.path
 
-        # TODO
         # robot position
+        self.arenaScenario.robotPosition[0] = self.robotAgentWidget.startXSpinBox.value()
+        self.arenaScenario.robotPosition[1] = self.robotAgentWidget.startYSpinBox.value()
         # robot goal
+        self.arenaScenario.robotGoal[0] = self.robotAgentWidget.goalXSpinBox.value()
+        self.arenaScenario.robotGoal[1] = self.robotAgentWidget.goalYSpinBox.value()
+
         # interactive obstacles
+        # TODO
 
 
 

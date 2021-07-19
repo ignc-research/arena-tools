@@ -90,9 +90,8 @@ class ArenaGraphicsEllipseItem(QtWidgets.QGraphicsEllipseItem):
     A QGraphicsEllipseItem that is connected to a QGraphicsScene and two QDoubleSpinBoxes
     that hold the position of this item.
     '''
-    def __init__(self, waypointWidget, *args, **kwargs):
+    def __init__(self, xSpinBox: QtWidgets.QDoubleSpinBox = None, ySpinBox: QtWidgets.QDoubleSpinBox = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.waypointWidget = waypointWidget
         self.setFlags(
             QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable |
             QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable |
@@ -101,7 +100,7 @@ class ArenaGraphicsEllipseItem(QtWidgets.QGraphicsEllipseItem):
         self.isDragged = False
 
         # set brush
-        brush = QtGui.QBrush(QtGui.QColor("blue"), QtCore.Qt.BrushStyle.SolidPattern)
+        brush = QtGui.QBrush(QtGui.QColor("green"), QtCore.Qt.BrushStyle.SolidPattern)
         self.setBrush(brush)
         # set pen
         pen = QtGui.QPen()
@@ -111,18 +110,39 @@ class ArenaGraphicsEllipseItem(QtWidgets.QGraphicsEllipseItem):
         pen.setJoinStyle(QtCore.Qt.PenJoinStyle.RoundJoin)
         self.setPen(pen)
 
-        self.keyPressEater = KeyPressEater(self.handleEvent)
+        # text item for displaying the name next to the item, needs to be enabled by calling self.enableTextItem by parent
+        self.textItem = QtWidgets.QGraphicsTextItem("")
+        self.textItem.setScale(0.05)
+        self.textItemEnabled = False
+
+        self.xSpinBox = xSpinBox
+        self.ySpinBox = ySpinBox
+
+    def enableTextItem(self, scene: QtWidgets.QGraphicsScene, text: str):
+        '''
+        Add QGraphicsTextItem to scene and set its text.
+        '''
+        if not self.textItemEnabled:
+            scene.addItem(self.textItem)
+            self.textItem.setPlainText(text)
+            self.textItemEnabled = True
+
+    def updateTextItemPos(self):
+        if self.textItemEnabled:
+            self.textItem.setPos(self.mapToScene(self.transformOriginPoint()))
 
     def setPosNoEvent(self, x, y):
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, False)
         super().setPos(x, y)
-        self.waypointWidget.pedsimAgentWidget.drawWaypointPath()
+        self.updateTextItemPos()
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True)
 
     def itemChange(self, change, value):
         if change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemPositionChange:
-            self.waypointWidget.updateSpinBoxesFromGraphicsItem()
-            self.waypointWidget.pedsimAgentWidget.drawWaypointPath()
+            if self.xSpinBox is not None and self.ySpinBox is not None:
+                self.xSpinBox.setValue(self.pos().x())
+                self.ySpinBox.setValue(self.pos().y())
+                self.updateTextItemPos()
 
         return super().itemChange(change, value)
 
@@ -133,6 +153,33 @@ class ArenaGraphicsEllipseItem(QtWidgets.QGraphicsEllipseItem):
     def mouseReleaseEvent(self, mouse_event):
         self.isDragged = False
         return super().mouseReleaseEvent(mouse_event)
+
+
+
+class WaypointGraphicsEllipseItem(ArenaGraphicsEllipseItem):
+    '''
+    This item is meant to visualize a waypoint and is connected to a parent WaypointWidget.
+    '''
+    def __init__(self, waypointWidget, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.waypointWidget = waypointWidget
+
+        # set color
+        brush = QtGui.QBrush(QtGui.QColor("blue"), QtCore.Qt.BrushStyle.SolidPattern)
+        self.setBrush(brush)
+
+        self.keyPressEater = KeyPressEater(self.handleEvent)
+
+    def setPosNoEvent(self, x, y):
+        super().setPosNoEvent(x, y)
+        self.waypointWidget.pedsimAgentWidget.drawWaypointPath()
+
+    def itemChange(self, change, value):
+        if change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemPositionChange:
+            self.waypointWidget.updateSpinBoxesFromGraphicsItem()
+            self.waypointWidget.pedsimAgentWidget.drawWaypointPath()
+
+        return super().itemChange(change, value)
 
     def handleEvent(self, event):
         if (event.type() == QtCore.QEvent.Type.KeyRelease
