@@ -189,20 +189,20 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
         else:
             return False
 
-    def closeEvent(self, event: QtGui.QCloseEvent):
-        if self.last_saved_model != self.model and len(self.model.bodies) > 0:
-            # ask user if she wants to save changes
-            msg_box = QtWidgets.QMessageBox()
-            msg_box.setText("Do you want to save changes?")
-            msg_box.setStandardButtons(QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel)
-            msg_box.setDefaultButton(QtWidgets.QMessageBox.Save)
-            ret = msg_box.exec()
-            if ret == QtWidgets.QMessageBox.Save:
-                self.on_save_as_clicked()
-            elif ret == QtWidgets.QMessageBox.Discard:
-                pass
-            elif ret == QtWidgets.QMessageBox.Cancel:
-                event.ignore()
+    # def closeEvent(self, event: QtGui.QCloseEvent):
+    #     if self.last_saved_model != self.model and len(self.model.bodies) > 0:
+    #         # ask user if she wants to save changes
+    #         msg_box = QtWidgets.QMessageBox()
+    #         msg_box.setText("Do you want to save changes?")
+    #         msg_box.setStandardButtons(QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel)
+    #         msg_box.setDefaultButton(QtWidgets.QMessageBox.Save)
+    #         ret = msg_box.exec()
+    #         if ret == QtWidgets.QMessageBox.Save:
+    #             self.on_save_as_clicked()
+    #         elif ret == QtWidgets.QMessageBox.Discard:
+    #             pass
+    #         elif ret == QtWidgets.QMessageBox.Cancel:
+    #             event.ignore()
 
 
 
