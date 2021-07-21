@@ -64,7 +64,10 @@ Click on File->Open or File->Save.
 ## Add Bodies
 Click on 'Add Body'.
 ## Flatland Body Editor
-![](img/body_editor.png)
+
+
+https://user-images.githubusercontent.com/74921738/126547646-d491a712-a2d7-4881-940a-81134da04555.mov
+
 
 Click on the 'edit'-Button of the Body you want to edit. The Flatland Body Editor will open. You can edit basic properties of the body and add polygon and circle footprints. You can drag the scene around using left mouse button and zoom in and out using scroll wheel.
 ### Polygon Footprints:
