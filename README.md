@@ -25,6 +25,11 @@ Click on File->Open or File->Save. Scenarios can be saved in YAML or JSON format
 ## Set Scenario Map
 Click on Elements->Set Map. Select a map.yaml file in the format of a typical ROS map (see [map_server Docs](http://wiki.ros.org/map_server#YAML_format)). The map will be loaded into the scene. You can drag the scene around using left mouse button and zoom in and out using scroll wheel.
 ## Add Pedsim Agents
+
+
+https://user-images.githubusercontent.com/74921738/126493822-88e94f7b-3595-4cce-93cd-df3a8a664607.mov
+
+
 Click on Elements->Add Pedsim Agent. An agent widget will be added on the left and the default Flatland Model for Pedsim Agents will be added to the scene. You can then do one of the following to define everything about the agent:
 - Drag the model around to position it in the scene.
 - Open the Pedsim Agent Editor by clicking on Edit or double click the model in the scene. Here you can set the Flatland Model, type and all other attributes of your agent.
