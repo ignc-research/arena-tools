@@ -18,8 +18,18 @@ class MapGenerator(QtWidgets.QMainWindow):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        # add graphicsscene and graphicsview
+        self.scene = QtWidgets.QGraphicsScene()
+        self.view = QtWidgets.QGraphicsView(self.scene)
+        self.view.setDragMode(QtWidgets.QGraphicsView.DragMode.ScrollHandDrag)
+        self.view.setSceneRect(-1000, -1000, 2000, 2000)
+        self.view.fitInView(QtCore.QRectF(-1.5, -1.5, 100, 100), mode=QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+        self.view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
         self.setup_ui()
         self.updateWidgetsFromSelectedType(self.type_dropdown.currentIndex())
+        self.showPreview()
 
     def setup_ui(self):
         self.setWindowTitle("Map Generator")
@@ -57,6 +67,7 @@ class MapGenerator(QtWidgets.QMainWindow):
         self.width_spin_box.setValue(101)
         self.width_spin_box.setSingleStep(1)
         self.width_spin_box.setFixedSize(150, 30)
+        self.width_spin_box.valueChanged.connect(self.showPreview)
         frame.layout().addWidget(self.width_spin_box, layout_index, 1, QtCore.Qt.AlignmentFlag.AlignRight)
         layout_index += 1
 
@@ -71,6 +82,7 @@ class MapGenerator(QtWidgets.QMainWindow):
         self.height_spin_box.setValue(101)
         self.height_spin_box.setSingleStep(1)
         self.height_spin_box.setFixedSize(150, 30)
+        self.height_spin_box.valueChanged.connect(self.showPreview)
         frame.layout().addWidget(self.height_spin_box, layout_index, 1, QtCore.Qt.AlignmentFlag.AlignRight)
         layout_index += 1
 
@@ -84,7 +96,7 @@ class MapGenerator(QtWidgets.QMainWindow):
         for map_type in MapType:
             self.type_dropdown.insertItem(map_type.value, map_type.name.lower())
         self.type_dropdown.setFixedSize(150, 30)
-        self.type_dropdown.currentIndexChanged.connect(self.updateWidgetsFromSelectedType)
+        self.type_dropdown.currentIndexChanged.connect(self.handleTypeChanged)
         frame.layout().addWidget(self.type_dropdown, layout_index, 1, QtCore.Qt.AlignmentFlag.AlignRight)
         layout_index += 1
 
@@ -99,6 +111,7 @@ class MapGenerator(QtWidgets.QMainWindow):
         self.corridor_width_spin_box.setValue(3)
         self.corridor_width_spin_box.setSingleStep(1)
         self.corridor_width_spin_box.setFixedSize(150, 30)
+        self.corridor_width_spin_box.valueChanged.connect(self.showPreview)
         frame.layout().addWidget(self.corridor_width_spin_box, layout_index, 1, QtCore.Qt.AlignmentFlag.AlignRight)
         layout_index += 1
 
@@ -113,6 +126,7 @@ class MapGenerator(QtWidgets.QMainWindow):
         self.iterations_spin_box.setValue(100)
         self.iterations_spin_box.setSingleStep(1)
         self.iterations_spin_box.setFixedSize(150, 30)
+        self.iterations_spin_box.valueChanged.connect(self.showPreview)
         frame.layout().addWidget(self.iterations_spin_box, layout_index, 1, QtCore.Qt.AlignmentFlag.AlignRight)
         layout_index += 1
 
@@ -127,21 +141,23 @@ class MapGenerator(QtWidgets.QMainWindow):
         self.obstacles_spin_box.setValue(20)
         self.obstacles_spin_box.setSingleStep(1)
         self.obstacles_spin_box.setFixedSize(150, 30)
+        self.obstacles_spin_box.valueChanged.connect(self.showPreview)
         frame.layout().addWidget(self.obstacles_spin_box, layout_index, 1, QtCore.Qt.AlignmentFlag.AlignRight)
         layout_index += 1
 
-        # obstacle extra radius
+        # obstacle size
         ## label
-        self.obstacle_extra_radius_label = QtWidgets.QLabel("### Obstacle Extra Radius")
-        self.obstacle_extra_radius_label.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
-        frame.layout().addWidget(self.obstacle_extra_radius_label, layout_index, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
+        self.obstacle_size_label = QtWidgets.QLabel("### Obstacle Size")
+        self.obstacle_size_label.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
+        frame.layout().addWidget(self.obstacle_size_label, layout_index, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
         ## spinbox
-        self.obstacle_extra_radius_spin_box = QtWidgets.QSpinBox()
-        self.obstacle_extra_radius_spin_box.setRange(0, 1000)
-        self.obstacle_extra_radius_spin_box.setValue(2)
-        self.obstacle_extra_radius_spin_box.setSingleStep(1)
-        self.obstacle_extra_radius_spin_box.setFixedSize(150, 30)
-        frame.layout().addWidget(self.obstacle_extra_radius_spin_box, layout_index, 1, QtCore.Qt.AlignmentFlag.AlignRight)
+        self.obstacle_size_spin_box = QtWidgets.QSpinBox()
+        self.obstacle_size_spin_box.setRange(0, 1000)
+        self.obstacle_size_spin_box.setValue(2)
+        self.obstacle_size_spin_box.setSingleStep(1)
+        self.obstacle_size_spin_box.setFixedSize(150, 30)
+        self.obstacle_size_spin_box.valueChanged.connect(self.showPreview)
+        frame.layout().addWidget(self.obstacle_size_spin_box, layout_index, 1, QtCore.Qt.AlignmentFlag.AlignRight)
         layout_index += 1
 
         # line
@@ -199,16 +215,14 @@ class MapGenerator(QtWidgets.QMainWindow):
         self.result_label_animation.setEndValue(QtGui.QColor(0,0,0))
 
         # right side graphicsview
-        self.scene = QtWidgets.QGraphicsScene()
-        self.view = QtWidgets.QGraphicsView(self.scene)
-        self.view.setDragMode(QtWidgets.QGraphicsView.DragMode.ScrollHandDrag)
-        self.view.setSceneRect(-1000, -1000, 2000, 2000)
-        self.view.fitInView(QtCore.QRectF(-1.5, -1.5, 100, 100), mode=QtCore.Qt.AspectRatioMode.KeepAspectRatio)
-        self.view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.splitter.addWidget(self.view)
 
         # set splitter sizes
         self.splitter.setSizes([300, 700])
+
+    def handleTypeChanged(self):
+        self.showPreview()
+        self.updateWidgetsFromSelectedType(self.type_dropdown.currentIndex())
 
     def getTextColor(self) -> QtGui.QColor:
         return self.result_label.palette().text().color()
@@ -243,22 +257,14 @@ class MapGenerator(QtWidgets.QMainWindow):
 
     def onGenerateMapsClicked(self):
         # generate maps
-        map_type = MapType(self.type_dropdown.currentIndex())
         height = self.height_spin_box.value()
         width = self.width_spin_box.value()
         path = pathlib.Path(self.folder_edit.text())
+
+        # create new maps with appropriate names
         map_names = self.getMapNames()
         for map_name in map_names:
-            map_array = None
-            if map_type == MapType.INDOOR:
-                corridor_radius = self.corridor_width_spin_box.value()
-                iterations = self.iterations_spin_box.value()
-                map_array = self.create_indoor_map(height, width, corridor_radius, iterations)
-            elif map_type == MapType.OUTDOOR:
-                obstacle_number = self.obstacles_spin_box.value()
-                obstacle_extra_radius = self.obstacle_extra_radius_spin_box.value()
-                map_array = self.create_outdoor_map(height, width, obstacle_number, obstacle_extra_radius)
-
+            map_array = self.getCurrentMap()
             if map_array is not None:
                 self.make_image(map_array, path, map_name)
                 self.create_yaml_files(path / map_name)
@@ -289,6 +295,65 @@ class MapGenerator(QtWidgets.QMainWindow):
             offset_ver += height + 10
         self.view.fitInView(QtCore.QRectF(-5, -5, width + 5, height + (height / 3)), mode=QtCore.Qt.AspectRatioMode.KeepAspectRatio)
 
+    def getCurrentMap(self) -> np.ndarray:
+        map_type = MapType(self.type_dropdown.currentIndex())
+        height = self.height_spin_box.value()
+        width = self.width_spin_box.value()
+        if height < 10 or width < 10:
+            return None
+        map_array = None
+        if map_type == MapType.INDOOR:
+            corridor_radius = self.corridor_width_spin_box.value()
+            iterations = self.iterations_spin_box.value()
+            map_array = self.create_indoor_map(height, width, corridor_radius, iterations)
+        elif map_type == MapType.OUTDOOR:
+            obstacle_number = self.obstacles_spin_box.value()
+            obstacle_extra_radius = self.obstacle_size_spin_box.value()
+            map_array = self.create_outdoor_map(height, width, obstacle_number, obstacle_extra_radius)
+
+        return map_array
+
+    def getXpmFromNdarray(self, a: np.ndarray) -> List[str]:
+        height, width = a.shape
+        xpm = []
+        xpm.append(f"{width} {height} 2 1")
+        xpm.append("1 c #000000")
+        xpm.append("0 c #FFFFFF")
+        for i in range(height):
+            line = ""
+            for j in range(width):
+                line += str(int(a[i, j]))
+            xpm.append(line)
+        return xpm
+
+    def showPreview(self):
+        '''
+        Generate an example map with the current settings and display it.
+        '''
+        # clear scene
+        items = self.scene.items()
+        for item in items:
+            self.scene.removeItem(item)
+
+        # generate a map
+        map_array = self.getCurrentMap()
+
+        if map_array is None:
+            return
+
+        # add map to the scene
+        ## generate XPM data from array
+        xpm = self.getXpmFromNdarray(map_array)
+        ## get pixmap from XPM data
+        pixmap = QtGui.QPixmap(xpm)
+        pixmap_item = QtWidgets.QGraphicsPixmapItem(pixmap)
+        ## add to scene
+        self.scene.addItem(pixmap_item)
+        ## adjust view
+        height = self.height_spin_box.value()
+        width = self.width_spin_box.value()
+        self.view.fitInView(QtCore.QRectF(-5, -5, width + 5, height + (height / 3)), mode=QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+
     def onBrowseClicked(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Maps Folder", str(pathlib.Path.home()))
         if os.path.exists(path):
@@ -303,8 +368,8 @@ class MapGenerator(QtWidgets.QMainWindow):
             self.iterations_spin_box.show()
             self.obstacles_label.hide()
             self.obstacles_spin_box.hide()
-            self.obstacle_extra_radius_label.hide()
-            self.obstacle_extra_radius_spin_box.hide()
+            self.obstacle_size_label.hide()
+            self.obstacle_size_spin_box.hide()
         elif map_type == MapType.OUTDOOR:
             self.corridor_width_label.hide()
             self.corridor_width_spin_box.hide()
@@ -312,8 +377,8 @@ class MapGenerator(QtWidgets.QMainWindow):
             self.iterations_spin_box.hide()
             self.obstacles_label.show()
             self.obstacles_spin_box.show()
-            self.obstacle_extra_radius_label.show()
-            self.obstacle_extra_radius_spin_box.show()
+            self.obstacle_size_label.show()
+            self.obstacle_size_spin_box.show()
 
     def create_yaml_files(self, map_folder_path: pathlib.Path):
         '''
