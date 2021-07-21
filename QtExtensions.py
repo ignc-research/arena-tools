@@ -23,25 +23,39 @@ class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
     A QGraphicsPathItem that is connected to a QGraphicsScene and two QDoubleSpinBoxes
     that hold the position of this item.
     '''
-    def __init__(self, pedsimAgentWidget, *args, **kwargs):
+    # itemChanged = QtCore.pyqtSignal()
+    # mouseDoubleClicked = QtCore.pyqtSignal()
+
+    def __init__(self, parentWidget, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.pedsimAgentWidget = pedsimAgentWidget
+        self.parentWidget = parentWidget
         self.setFlags(
             QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable |
             QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable |
             QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
             )
 
+        self.isDragged = False
+
+        # create brush
+        brush = QtGui.QBrush(QtGui.QColor("red"), QtCore.Qt.BrushStyle.SolidPattern)
+        self.setBrush(brush)
+        # create pen
+        pen = QtGui.QPen()
+        pen.setWidthF(0.01)
+        pen.setStyle(QtCore.Qt.PenStyle.SolidLine)
+        pen.setCapStyle(QtCore.Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(QtCore.Qt.PenJoinStyle.RoundJoin)
+        self.setPen(pen)
+
         # add text item for displaying the name next to the item
         self.textItem = QtWidgets.QGraphicsTextItem("")
         self.textItem.setScale(0.05)
-        pedsimAgentWidget.graphicsScene.addItem(self.textItem)
+        parentWidget.graphicsScene.addItem(self.textItem)
         self.updateTextItemPos()
-        self.keyPressEater = KeyPressEater(self.handleEvent)
 
-    def updateTextItemText(self):
-        if hasattr(self.pedsimAgentWidget, "name_label"):
-            self.textItem.setPlainText(self.pedsimAgentWidget.name_label.text())
+        # catch key presses for interacting with the item in the scene
+        self.keyPressEater = KeyPressEater(self.handleEvent)
 
     def updateTextItemPos(self):
         self.textItem.setPos(self.mapToScene(self.transformOriginPoint()))
@@ -49,27 +63,28 @@ class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
     def setPosNoEvent(self, x, y):
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, False)
         super().setPos(x, y)
-        self.pedsimAgentWidget.drawWaypointPath()
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True)
 
     def itemChange(self, change, value):
         if change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemPositionChange:
-            self.pedsimAgentWidget.updateSpinBoxesFromGraphicsItem()
+            # self.parentWidget.updateSpinBoxesFromGraphicsItem()
             self.updateTextItemPos()
-            self.pedsimAgentWidget.drawWaypointPath()
+            # self.parentWidget.drawWaypointPath()
+            self.parentWidget.handleItemChange()
 
         return super().itemChange(change, value)
 
     def mousePressEvent(self, mouse_event):
-        self.pedsimAgentWidget.draggingItem = True
+        self.isDragged = True
         return super().mousePressEvent(mouse_event)
 
     def mouseReleaseEvent(self, mouse_event):
-        self.pedsimAgentWidget.draggingItem = False
+        self.isDragged = False
         return super().mouseReleaseEvent(mouse_event)
 
     def mouseDoubleClickEvent(self, mouse_event):
-        self.pedsimAgentWidget.onEditClicked()
+        self.parentWidget.handleMouseDoubleClick()
+        # self.parentWidget.onEditClicked()
 
     def handleEvent(self, event):
         if (event.type() == QtCore.QEvent.Type.KeyRelease
@@ -81,7 +96,7 @@ class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
         return False
 
     def remove(self):
-        self.pedsimAgentWidget.remove()
+        self.parentWidget.remove()
 
 
 
@@ -318,7 +333,7 @@ class ActiveModeWindow(QtWidgets.QMessageBox):
         self.setText("Click anywhere on the map to add a waypoint.\nPress ESC to finish.")
         self.setWindowModality(QtCore.Qt.WindowModality.NonModal)
         self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint, True)
-        self.move(1100, 100)
+        self.move(1000, 180)
         self.buttonClicked.connect(self.disable)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent):

@@ -24,6 +24,7 @@ class PedsimAgentEditor(QtWidgets.QWidget):
         self.setLayout(QtWidgets.QGridLayout())
         self.setWindowModality(QtCore.Qt.WindowModality.ApplicationModal)
         self.resize(600, 600)
+        self.move(220, 150)
 
         # scrollarea
         self.scrollArea = QtWidgets.QScrollArea(self)
@@ -390,12 +391,12 @@ class PedsimAgentEditor(QtWidgets.QWidget):
             self.waitTimeSpinBox.hide()
             self.triggerZoneLabel.hide()
             self.triggerZoneSpinBox.hide()
-        elif mode == PedsimStartupMode.WAITTIMER:
+        elif mode == PedsimStartupMode.WAIT_TIMER:
             self.waitTimeLabel.show()
             self.waitTimeSpinBox.show()
             self.triggerZoneLabel.hide()
             self.triggerZoneSpinBox.hide()
-        elif mode == PedsimStartupMode.TRIGGERZONE:
+        elif mode == PedsimStartupMode.TRIGGER_ZONE:
             self.waitTimeLabel.hide()
             self.waitTimeSpinBox.hide()
             self.triggerZoneLabel.show()

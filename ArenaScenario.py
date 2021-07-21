@@ -3,11 +3,13 @@ import os
 import yaml
 import json
 from PedsimAgent import *
+from FlatlandModel import *
 
 class ArenaScenario():
     def __init__(self):
         self.pedsimAgents = []  # list of PedsimAgent objects
         self.interactiveObstacles = []  # list of InteractiveObstacle messages
+        self.staticObstacles = []  # list of FlatlandObjects
         self.robotPosition = np.zeros(2)  # starting position of robot
         self.robotGoal = np.zeros(2)  # robot goal
         self.mapPath = ""  # path to map file
@@ -18,6 +20,7 @@ class ArenaScenario():
         d = {}
 
         d["pedsim_agents"] = [a.toDict() for a in self.pedsimAgents]
+        d["static_obstacles"] = [o.toDict() for o in self.staticObstacles]
         # d["interactive_obstacles"] = TODO...
         d["robot_position"] = [float(value) for value in self.robotPosition]
         d["robot_goal"] = [float(value) for value in self.robotGoal]
@@ -33,6 +36,7 @@ class ArenaScenario():
 
     def loadFromDict(self, d: dict):
         self.pedsimAgents = [PedsimAgent.fromDict(a) for a in d["pedsim_agents"]]
+        self.staticObstacles = [FlatlandObject.fromDict(o) for o in d["static_obstacles"]]
         # self.interactiveObstacles = ...TODO
         self.robotPosition = np.array([d["robot_position"][0], d["robot_position"][1]])
         self.robotGoal = np.array([d["robot_goal"][0], d["robot_goal"][1]])

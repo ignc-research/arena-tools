@@ -210,3 +210,29 @@ class FlatlandModel():
                     self.bodies[self.bodies_index] = flatland_body
                     self.bodies_index += 1
             self.path = path
+
+class FlatlandObject():
+    def __init__(self, name: str = "", model_path: str = ""):
+        self.name = name
+        self.flatlandModel = FlatlandModel()
+        if os.path.exists(model_path):
+            self.flatlandModel.load(model_path)
+        self.pos = np.zeros(2)
+
+    @staticmethod
+    def fromDict(d : dict):
+        o = FlatlandObject()
+        o.loadFromDict(d)
+        return o
+
+    def loadFromDict(self, d: dict):
+        self.name = d["name"]
+        self.flatlandModel.load(d["model_path"])
+        self.pos = np.array([float(val) for val in d["pos"]])
+
+    def toDict(self):
+        d = {}
+        d["name"] = self.name
+        d["model_path"] = self.flatlandModel.path
+        d["pos"] = [float(val) for val in self.pos]
+        return d
