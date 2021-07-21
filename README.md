@@ -24,23 +24,32 @@ python ArenaScenarioEditor.py
 Click on File->Open or File->Save. Scenarios can be saved in YAML or JSON format, just use the according file ending.
 ## Set Scenario Map
 Click on Elements->Set Map. Select a map.yaml file in the format of a typical ROS map (see [map_server Docs](http://wiki.ros.org/map_server#YAML_format)). The map will be loaded into the scene. You can drag the scene around using left mouse button and zoom in and out using scroll wheel.
-## Add Pedsim Agents
 
+## Set Robot initial position and goal
+Robot position and goal is always part of a scenario. Position them by dragging the red and green circle to the desired position.
+
+## Add Pedsim Agents
 
 https://user-images.githubusercontent.com/74921738/126493822-88e94f7b-3595-4cce-93cd-df3a8a664607.mov
 
 
-Click on Elements->Add Pedsim Agent. An agent widget will be added on the left and the default Flatland Model for Pedsim Agents will be added to the scene. You can then do one of the following to define everything about the agent:
+- Click on Elements->Add Pedsim Agent. An agent widget will be added on the left and the default Flatland Model for Pedsim Agents will be added to the scene.
 - Drag the model around to position it in the scene.
 - Open the Pedsim Agent Editor by clicking on Edit or double click the model in the scene. Here you can set the Flatland Model, type and all other attributes of your agent.
 - Click on 'Add Waypoints...' to enter Waypoint Mode. Click anywhere in the scene to add a waypoint for this agent. Press ESC or click OK when finished.
 - Move a waypoint by dragging it in the scene.
 - Delete a waypoint by clicking on the red X or by selecting it in the scene and  hitting DELETE on your keyboard.
 - Delete the agent by clicking on Delete or by selecting it in the scene and hitting DELETE on your keyboard.
-## Set Robot initial position and goal
-Not implemented yet.
+
+## Add Flatland Object (Static Obstacle)
+- Click on Elements->Add Flatland Object. A widget will be added on the left and the default Flatland Model for objects will be added to the scene.
+- Choose a model YAML file by clicking on the button in the widget
+- Drag the model around to position it in the scene.
+- Delete the object by clicking on Delete or by selecting it in the scene and hitting DELETE on your keyboard.
 
 # Flatland Model Editor
+![](img/model_editor.png)
+
 Flatland Model Editor is a tool to create models used by Flatland. See the [Flatland Documentation](https://flatland-simulator.readthedocs.io/en/latest/core_functions/models.html) for a description of a model file. Run it using Python:
 ```
 python FlatlandModelEditor.py
@@ -50,6 +59,8 @@ Click on File->Open or File->Save.
 ## Add Bodies
 Click on 'Add Body'.
 ## Flatland Body Editor
+![](img/body_editor.png)
+
 Click on the 'edit'-Button of the Body you want to edit. The Flatland Body Editor will open. You can edit basic properties of the body and add polygon and circle footprints. You can drag the scene around using left mouse button and zoom in and out using scroll wheel.
 ### Polygon Footprints:
 - Click on 'Add Polygon' to add a polygon footprint. A Footprint widget will be added on the left.
