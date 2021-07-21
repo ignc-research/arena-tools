@@ -74,6 +74,7 @@ Click on the 'edit'-Button of the Body you want to edit. The Flatland Body Edito
 - Increase or decrease the number of vertices by clicking on + or -.
 - Set position of the footprint by dragging it around in the scene.
 - Set position of each vertice by holding the mouse near the vertice (cursor should change) and dragging the vertice.
+- Duplicate footprint by selecting it in the scene and then pressing SHIFT + D
 - Save body by clicking 'Save and Close'
 ### Circle Footprints
 Not yet implemented.
