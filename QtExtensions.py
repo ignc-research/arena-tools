@@ -1,5 +1,6 @@
 from PyQt5 import QtGui, QtCore, QtWidgets
 import numpy as np
+from HelperFunctions import *
 
 class KeyPressEater(QtCore.QObject):
     '''
@@ -219,7 +220,6 @@ class ArenaQGraphicsPolygonItem(QtWidgets.QGraphicsPolygonItem):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setFlags(
-            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable |
             QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable |
             QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
             )
@@ -258,9 +258,8 @@ class ArenaQGraphicsPolygonItem(QtWidgets.QGraphicsPolygonItem):
         """
         self.footprint_widget.dragging_polygon = True
         self.point_index = self.handleAt(mouse_event.pos())
-        if self.point_index != -1:
-            self.mouse_press_pos = mouse_event.pos()
-            self.mouse_press_polygon = self.polygon()
+        self.mouse_press_pos = mouse_event.pos()
+        self.mouse_press_polygon = self.polygon()
         return super().mousePressEvent(mouse_event)
 
     def mouseMoveEvent(self, mouse_event):
@@ -268,9 +267,12 @@ class ArenaQGraphicsPolygonItem(QtWidgets.QGraphicsPolygonItem):
         Executed when the mouse is being moved over the item while being pressed.
         """
         if self.point_index != -1:
+            # moving one vertice
             self.interactiveResize(self.point_index, mouse_event.pos())
         else:
-            return super().mouseMoveEvent(mouse_event)
+            # moving the whole polygon
+            for i in range(len(self.polygon())):
+                self.interactiveResize(i, mouse_event.pos())
 
     def mouseReleaseEvent(self, mouse_event):
         """
@@ -280,6 +282,8 @@ class ArenaQGraphicsPolygonItem(QtWidgets.QGraphicsPolygonItem):
         self.point_index = -1
         self.mouse_press_pos = None
         self.mouse_press_polygon = None
+        self.setPolygon(self.getRoundedPolygon())
+        self.footprint_widget.update_spin_boxes()
         return super().mouseReleaseEvent(mouse_event)
 
     def interactiveResize(self, point_index_, mouse_pos):
@@ -287,6 +291,7 @@ class ArenaQGraphicsPolygonItem(QtWidgets.QGraphicsPolygonItem):
         diff = mouse_pos - self.mouse_press_pos
         polygon[point_index_] = self.mouse_press_polygon[point_index_] + diff
         self.setPolygon(polygon)
+        self.setPolygon(self.getRoundedPolygon())
         self.footprint_widget.update_spin_boxes()
 
     def setPolygon(self, *args):
@@ -305,6 +310,13 @@ class ArenaQGraphicsPolygonItem(QtWidgets.QGraphicsPolygonItem):
             self.footprint_widget.update_spin_boxes()
 
         return super().itemChange(change, value)
+
+    def getRoundedPolygon(self) -> QtGui.QPolygonF:
+        mapped_polygon = self.mapToScene(self.polygon())
+        for i in range(len(mapped_polygon)):
+            mapped_polygon[i] = QtCore.QPointF(round_one_and_half_decimal_places(mapped_polygon[i].x()), round_one_and_half_decimal_places(mapped_polygon[i].y()))
+        rounded_polygon = self.mapFromScene(mapped_polygon)
+        return rounded_polygon
 
     def hoverMoveEvent(self, move_event):
         """

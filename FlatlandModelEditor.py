@@ -64,6 +64,7 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap('icon.png'), QtGui.QIcon.Selected, QtGui.QIcon.On)
         self.setWindowIcon(icon)
+        self.move(500, 300)
 
         central_widget = QtWidgets.QWidget()
         central_widget.setLayout(QtWidgets.QVBoxLayout())

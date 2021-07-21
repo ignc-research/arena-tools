@@ -164,6 +164,7 @@ class FlatlandBodyEditor(QtWidgets.QWidget):
         self.setLayout(QtWidgets.QGridLayout())
         self.setWindowModality(QtCore.Qt.WindowModality.ApplicationModal)
         self.resize(1000, 600)
+        self.move(200, 200)
 
         # name
         ## label
@@ -274,7 +275,9 @@ class FlatlandBodyEditor(QtWidgets.QWidget):
         )
         self.add_polygon_footprint(polygon, self.color_dialog.currentColor())
 
-    def add_polygon_footprint(self, polygon: QtGui.QPolygonF, color: QtGui.QColor):
+    def add_polygon_footprint(self, polygon: QtGui.QPolygonF, color: QtGui.QColor = None):
+        if color == None:
+            color = self.color_dialog.currentColor()
         # create brush
         brush = QtGui.QBrush(color, QtCore.Qt.BrushStyle.SolidPattern)
         # create pen
@@ -321,6 +324,21 @@ class FlatlandBodyEditor(QtWidgets.QWidget):
         self.flatland_body_widget.name_label.setText(self.flatland_body.name)
         # hide window
         self.hide()
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent):
+        if event.modifiers() == QtCore.Qt.KeyboardModifier.ShiftModifier and event.key() == QtCore.Qt.Key.Key_D:
+            # duplicate selected items
+            selected = self.gscene.selectedItems()
+            for item in selected:
+                if isinstance(item, ArenaQGraphicsPolygonItem):
+                    polygon = item.mapToScene(item.polygon())
+                    translation = QtCore.QPointF(0.5, 0.5)
+                    new_polygon = QtGui.QPolygonF([point + translation for point in polygon])
+                    self.add_polygon_footprint(new_polygon)
+
+                # TODO
+                # elif isinstance(item, ArenaQGraphicsEllipseItem):
+        return super().keyPressEvent(event)
 
     def save(self):
         self.update_body_from_widgets(self.flatland_body)
