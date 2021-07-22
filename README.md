@@ -12,6 +12,11 @@ Install Python packages:
 ```
 pip3 install pyqt5 numpy pyyaml
 ```
+## Run
+```
+python arena_tools.py
+```
+
 
 # Scenario Editor
 ![](img/scenario_editor.png)

@@ -1,6 +1,8 @@
+from PyQt5 import QtCore
+from MapGenerator import MapGenerator
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt ,QMetaObject
-from PyQt5.QtGui import QPalette , QIcon ,QPixmap ,QFont
+from PyQt5.QtGui import QPalette , QIcon ,QPixmap ,QFont, QMoveEvent
 from functools import partial
 import os, sys
 import rospy
@@ -489,12 +491,12 @@ class main_window(QMainWindow):
         self.window = QWidget(self)
         ### add label, size and center the main window ###
         self.setCentralWidget(self.window)
-        self.setWindowTitle('Arena Configs')
+        self.setWindowTitle('Arena Tools')
         self.resize(450, 200)
         icon = QIcon()
         icon.addPixmap(QPixmap('icon.png'), QIcon.Selected, QIcon.On)
         self.setWindowIcon(icon)
-        qtRectangle = self.window.frameGeometry()
+        qtRectangle = QtCore.QRect(self.pos(), self.size())
         centerPoint = QDesktopWidget().availableGeometry().center()
         qtRectangle.moveCenter(centerPoint)
         self.move(qtRectangle.topLeft())
@@ -503,11 +505,11 @@ class main_window(QMainWindow):
         ### add diffrent buttons to the main window and link them to functions ###
         self.button1 = QPushButton('Edit Training Curriculum')
         self.button1.clicked.connect(self.on_button1_clicked)
-        self.button2 = QPushButton('Edit Flatland Models')
+        self.button2 = QPushButton('Flatland Model Editor')
         self.button2.clicked.connect(self.on_button2_clicked)
-        self.button3 = QPushButton('Create New Model')
+        self.button3 = QPushButton('Arena Scenario Editor')
         self.button3.clicked.connect(self.on_button3_clicked)
-        self.button4 = QPushButton('Create Custom Scenario')
+        self.button4 = QPushButton('Map Generator')
         self.button4.clicked.connect(self.on_button4_clicked)
        
         ### add the layout of the main window ###
@@ -540,18 +542,16 @@ class main_window(QMainWindow):
 
     def on_button3_clicked(self, checked):
         if self.w is None:
-            self.window3 = SubWindow()
-            self.window3.setWindowTitle('New Model Configs')
-
-            self.window3.show()
+            self.arena_scenario_editor_window = ArenaScenarioEditor()
+            self.arena_scenario_editor_window.show()
         else:
             self.w.close()  # Close window.
             self.w = None  # Discard reference.
 
     def on_button4_clicked(self, checked):
         if self.w is None:
-            self.arena_scenario_editor_window = ArenaScenarioEditor()
-            self.arena_scenario_editor_window.show()
+            self.map_generator_window = MapGenerator()
+            self.map_generator_window.show()
         else:
             self.w.close()  # Close window.
             self.w = None  # Discard reference.
