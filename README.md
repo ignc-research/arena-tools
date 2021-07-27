@@ -56,6 +56,7 @@ https://user-images.githubusercontent.com/74921738/126516348-d2c4ab92-fb8b-4b57-
 - Choose a model YAML file by clicking on the button in the widget
 - Drag the model around to position it in the scene.
 - Delete the object by clicking on Delete or by selecting it in the scene and hitting DELETE on your keyboard.
+- Rotate object by holding CTRL while clicking on the object (keep mouse button pressed) and dragging the mouse.
 
 # Flatland Model Editor
 ![](img/model_editor.png)

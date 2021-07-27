@@ -218,6 +218,7 @@ class FlatlandObject():
         if os.path.exists(model_path):
             self.flatlandModel.load(model_path)
         self.pos = np.zeros(2)
+        self.angle = 0.0
 
     @staticmethod
     def fromDict(d : dict):
@@ -229,10 +230,12 @@ class FlatlandObject():
         self.name = d["name"]
         self.flatlandModel.load(d["model_path"])
         self.pos = np.array([float(val) for val in d["pos"]])
+        self.angle = float(d["angle"])
 
     def toDict(self):
         d = {}
         d["name"] = self.name
         d["model_path"] = self.flatlandModel.path
         d["pos"] = [float(val) for val in self.pos]
+        d["angle"] = self.angle
         return d

@@ -475,6 +475,9 @@ class FlatlandObjectWidget(QtWidgets.QFrame):
                     polygon = QtGui.QPolygonF([QtCore.QPointF(point[0], point[1]) for point in footprint.points])
                     painter_path.addPolygon(polygon)
         self.graphicsPathItem.setPath(painter_path)
+        # update rotation
+        angle = 360 * self.flatlandObject.angle / (2 * np.pi)  # get angle in degrees
+        self.graphicsPathItem.setRotation(angle)
         # update text
         self.graphicsPathItem.textItem.setPlainText(self.flatlandObject.name)
 
@@ -497,6 +500,9 @@ class FlatlandObjectWidget(QtWidgets.QFrame):
         pos_x = self.posXSpinBox.value()
         pos_y = self.posYSpinBox.value()
         self.flatlandObject.pos = np.array([pos_x, pos_y])
+        angle = self.graphicsPathItem.rotation()  # this is a value between -180 and 180
+        angle = 2 * np.pi * (angle + 180) / 360  # convert from degrees to radian
+        self.flatlandObject.angle = angle
 
         # model path
         # already updated in self.onBrowseClicked()

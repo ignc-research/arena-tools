@@ -19,19 +19,17 @@ class KeyPressEater(QtCore.QObject):
         return self.handleEventFunction(event)
         
 
+
 class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
     '''
     A QGraphicsPathItem that is connected to a QGraphicsScene and two QDoubleSpinBoxes
     that hold the position of this item.
     '''
-    # itemChanged = QtCore.pyqtSignal()
-    # mouseDoubleClicked = QtCore.pyqtSignal()
 
     def __init__(self, parentWidget, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.parentWidget = parentWidget
         self.setFlags(
-            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable |
             QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable |
             QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
             )
@@ -68,16 +66,36 @@ class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
 
     def itemChange(self, change, value):
         if change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemPositionChange:
-            # self.parentWidget.updateSpinBoxesFromGraphicsItem()
             self.updateTextItemPos()
-            # self.parentWidget.drawWaypointPath()
             self.parentWidget.handleItemChange()
 
         return super().itemChange(change, value)
 
     def mousePressEvent(self, mouse_event):
         self.isDragged = True
+        self.oldMousePos = mouse_event.scenePos()
+        self.oldItemPos = self.scenePos()
+        self.oldItemRotation = self.rotation()
+        modifier = QtWidgets.QApplication.keyboardModifiers()
+        if modifier == QtCore.Qt.KeyboardModifier.ControlModifier:
+            self.ctrlPressed = True
+        else:
+            self.ctrlPressed = False
+
         return super().mousePressEvent(mouse_event)
+
+    def mouseMoveEvent(self, mouse_event):
+        # rotate
+        if self.isDragged and self.ctrlPressed:
+            diff = mouse_event.scenePos() - self.oldMousePos
+            angle = np.arctan2(diff.y(), diff.x())
+            angle = 360 * angle / (2 * np.pi)  # convert radians to degrees
+            self.setRotation(angle)
+        # translate
+        elif self.isDragged:
+            diff = mouse_event.scenePos() - self.oldMousePos
+            new_pos = self.oldItemPos + diff
+            self.setPos(new_pos)
 
     def mouseReleaseEvent(self, mouse_event):
         self.isDragged = False
@@ -85,9 +103,9 @@ class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
 
     def mouseDoubleClickEvent(self, mouse_event):
         self.parentWidget.handleMouseDoubleClick()
-        # self.parentWidget.onEditClicked()
 
     def handleEvent(self, event):
+        # delete item when selected and DELETE key pressed
         if (event.type() == QtCore.QEvent.Type.KeyRelease
             and event.key() == QtCore.Qt.Key.Key_Delete
             and self.isSelected()):
@@ -103,7 +121,7 @@ class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
 
 class ArenaGraphicsEllipseItem(QtWidgets.QGraphicsEllipseItem):
     '''
-    A QGraphicsEllipseItem that is connected to a QGraphicsScene and two QDoubleSpinBoxes
+    A QGraphicsEllipseItem that is connected to two QDoubleSpinBoxes
     that hold the position of this item.
     '''
     def __init__(self, xSpinBox: QtWidgets.QDoubleSpinBox = None, ySpinBox: QtWidgets.QDoubleSpinBox = None, *args, **kwargs):
