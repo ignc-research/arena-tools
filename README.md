@@ -52,6 +52,10 @@ https://user-images.githubusercontent.com/74921738/126493822-88e94f7b-3595-4cce-
 https://user-images.githubusercontent.com/74921738/126516348-d2c4ab92-fb8b-4b57-9a4f-3bdefeb9e665.mov
 
 
+
+https://user-images.githubusercontent.com/74921738/127176906-98ab58bb-9c40-4d56-b65e-049072f45a5d.mov
+
+
 - Click on Elements->Add Flatland Object. A widget will be added on the left and the default Flatland Model for objects will be added to the scene.
 - Choose a model YAML file by clicking on the button in the widget
 - Drag the model around to position it in the scene.
