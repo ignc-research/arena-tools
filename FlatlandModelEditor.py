@@ -5,14 +5,22 @@ from FlatlandModel import *
 from FlatlandBodyEditor import FlatlandBodyEditor
 from HelperFunctions import *
 
+
 class FlatlandBodyWidget(QtWidgets.QWidget):
-    '''
+    """
     This is a row in the bodies frame. It has the following elements:
         - body name label
         - edit button
         - delete button
-    '''
-    def __init__(self, id: int, flatland_model: FlatlandModel, create_new_flatland_body = True, **kwargs):
+    """
+
+    def __init__(
+        self,
+        id: int,
+        flatland_model: FlatlandModel,
+        create_new_flatland_body=True,
+        **kwargs
+    ):
         super().__init__(**kwargs)
         self.setup_ui()
         self.id = id
@@ -21,7 +29,13 @@ class FlatlandBodyWidget(QtWidgets.QWidget):
             flatland_body = FlatlandBody()
             self.model.bodies[id] = flatland_body
 
-        self.flatland_body_editor = FlatlandBodyEditor(id, self.model.bodies[id], self, parent=self.parent(), flags=QtCore.Qt.WindowType.Window)
+        self.flatland_body_editor = FlatlandBodyEditor(
+            id,
+            self.model.bodies[id],
+            self,
+            parent=self.parent(),
+            flags=QtCore.Qt.WindowType.Window,
+        )
 
     def setup_ui(self):
         self.layout = QtWidgets.QHBoxLayout()
@@ -62,7 +76,7 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
     def setup_ui(self):
         self.setWindowTitle("Flatland Model Editor")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap('icon.png'), QtGui.QIcon.Selected, QtGui.QIcon.On)
+        icon.addPixmap(QtGui.QPixmap("icon.png"), QtGui.QIcon.Selected, QtGui.QIcon.On)
         self.setWindowIcon(icon)
         self.move(500, 300)
 
@@ -80,7 +94,9 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
         self.setup_bodies_frame()
 
         # add expanding spacer item
-        spacer = QtWidgets.QSpacerItem(1, 1, vPolicy=QtWidgets.QSizePolicy.Policy.Expanding)
+        spacer = QtWidgets.QSpacerItem(
+            1, 1, vPolicy=QtWidgets.QSizePolicy.Policy.Expanding
+        )
         self.centralWidget().layout().addSpacerItem(spacer)
 
         self.resize(500, 200)
@@ -98,7 +114,9 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
         self.add_body_button = QtWidgets.QPushButton("Add Body")
         self.add_body_button.setFixedSize(200, 30)
         self.add_body_button.clicked.connect(self.on_add_body_button_clicked)
-        frame.layout().addWidget(self.add_body_button, 0, 1, QtCore.Qt.AlignmentFlag.AlignRight)
+        frame.layout().addWidget(
+            self.add_body_button, 0, 1, QtCore.Qt.AlignmentFlag.AlignRight
+        )
 
         # add body list
         self.bodies_list_frame = QtWidgets.QFrame()
@@ -127,7 +145,11 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
             # ask user if she wants to save changes
             msg_box = QtWidgets.QMessageBox()
             msg_box.setText("Do you want to save changes?")
-            msg_box.setStandardButtons(QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel)
+            msg_box.setStandardButtons(
+                QtWidgets.QMessageBox.Save
+                | QtWidgets.QMessageBox.Discard
+                | QtWidgets.QMessageBox.Cancel
+            )
             msg_box.setDefaultButton(QtWidgets.QMessageBox.Save)
             ret = msg_box.exec()
             if ret == QtWidgets.QMessageBox.Save:
@@ -154,8 +176,12 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
         return w
 
     def on_open_clicked(self):
-        initial_folder = os.path.join(get_ros_package_path("simulator_setup"), "dynamic_obstacles")
-        res = QtWidgets.QFileDialog.getOpenFileName(parent=self, directory=initial_folder)
+        initial_folder = os.path.join(
+            get_ros_package_path("simulator_setup"), "dynamic_obstacles"
+        )
+        res = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self, directory=initial_folder
+        )
         path = res[0]
         if path != "":
             self.load_model(path)
@@ -165,23 +191,29 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
         self.remove_all_bodies()
         self.model.load(path)
         for _ in self.model.bodies.values():
-            w = FlatlandBodyWidget(self.body_id, self.model, create_new_flatland_body=False, parent=self)
+            w = FlatlandBodyWidget(
+                self.body_id, self.model, create_new_flatland_body=False, parent=self
+            )
             self.add_flatland_body_widget(w)
 
         self.last_saved_model = copy.deepcopy(self.model)
 
     def on_save_clicked(self):
         if self.model.save():
-           self.last_saved_model = copy.deepcopy(self.model)
+            self.last_saved_model = copy.deepcopy(self.model)
         else:
             # no path has been set yet. fall back to "save as"
             if self.on_save_as_clicked():
                 self.last_saved_model = copy.deepcopy(self.model)
 
     def on_save_as_clicked(self):
-        initial_folder = os.path.join(get_ros_package_path("simulator_setup"), "dynamic_obstacles")
+        initial_folder = os.path.join(
+            get_ros_package_path("simulator_setup"), "dynamic_obstacles"
+        )
 
-        res = QtWidgets.QFileDialog.getSaveFileName(parent=self, directory=initial_folder)
+        res = QtWidgets.QFileDialog.getSaveFileName(
+            parent=self, directory=initial_folder
+        )
         path = res[0]
         if path != "":
             self.model.save(path)
@@ -204,7 +236,6 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
     #             pass
     #         elif ret == QtWidgets.QMessageBox.Cancel:
     #             event.ignore()
-
 
 
 if __name__ == "__main__":
