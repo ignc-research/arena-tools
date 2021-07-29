@@ -2,6 +2,7 @@ import pathlib
 from PyQt5 import QtGui, QtCore, QtWidgets
 import os
 import time
+import copy
 from typing import Tuple, List
 from FlatlandBodyEditor import *
 from PedsimAgentEditor import PedsimAgentEditor
@@ -621,6 +622,7 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         self.pixmap_item = None
         self.mapData = None
         self.currentSavePath = ""
+        self.copied = []
 
     def setup_ui(self):
         self.setWindowTitle("Flatland Scenario Editor")
@@ -771,6 +773,29 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
     def keyPressEvent(self, event: QtGui.QKeyEvent):
         if event.key() == QtCore.Qt.Key.Key_Escape or event.key() == QtCore.Qt.Key.Key_Return:
             self.disableAddWaypointMode()
+
+        if event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier and event.key() == QtCore.Qt.Key.Key_C:
+            self.copied = self.gscene.selectedItems()
+
+        if event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier and event.key() == QtCore.Qt.Key.Key_V:
+            # duplicate copied items
+            for item in self.copied:
+                widget = item.parentWidget
+                if isinstance(widget, PedsimAgentWidget):
+                    widget.save()
+                    agent = copy.deepcopy(widget.pedsimAgent)
+                    agent.name += str(self.numObstacles + 1)
+                    agent.pos[0] += 1.0
+                    agent.pos[1] += 1.0
+                    self.addPedsimAgentWidget(agent)
+                elif isinstance(widget, FlatlandObjectWidget):
+                    widget.save()
+                    obj = copy.deepcopy(widget.flatlandObject)
+                    obj.name += str(self.numObstacles + 1)
+                    obj.pos[0] += 1.0
+                    obj.pos[1] += 1.0
+                    self.addFlatlandObjectWidget(obj)
+
         return super().keyPressEvent(event)
 
     def onNewScenarioClicked(self):
