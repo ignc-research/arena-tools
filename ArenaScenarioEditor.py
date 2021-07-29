@@ -261,6 +261,7 @@ class PedsimAgentWidget(QtWidgets.QFrame):
         self.graphicsPathItem.setPath(painter_path)
         # update text
         self.graphicsPathItem.textItem.setPlainText(self.name_label.text())
+        self.graphicsPathItem.updateTextItemPos()
 
     def setPedsimAgent(self, agent: PedsimAgent):
         self.pedsimAgent = agent
@@ -481,6 +482,7 @@ class FlatlandObjectWidget(QtWidgets.QFrame):
         self.graphicsPathItem.setRotation(angle)
         # update text
         self.graphicsPathItem.textItem.setPlainText(self.flatlandObject.name)
+        self.graphicsPathItem.updateTextItemPos()
 
     def updateEverythingFromFlatlandObject(self):
         # position
@@ -623,6 +625,7 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         self.mapData = None
         self.currentSavePath = ""
         self.copied = []
+        self.lastNameId = 0
 
     def setup_ui(self):
         self.setWindowTitle("Flatland Scenario Editor")
@@ -719,7 +722,7 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         except:
             pass
 
-        new_agent = PedsimAgent("Ped " + str(self.numObstacles), yaml_file)
+        new_agent = PedsimAgent(self.generateName(), yaml_file)
         self.arenaScenario.pedsimAgents.append(new_agent)
         self.addPedsimAgentWidget(new_agent)
 
@@ -740,7 +743,7 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         except:
             pass
 
-        new_object = FlatlandObject("obstacle " + str(self.numObstacles), model_path)
+        new_object = FlatlandObject(self.generateName(), model_path)
         self.arenaScenario.staticObstacles.append(new_object)
         self.addFlatlandObjectWidget(new_object)
 
@@ -770,6 +773,20 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
                 widgets.append(w)
         return widgets
 
+    def getElementsCount(self):
+        count = 0
+        for i in range(self.obstacles_frame.layout().count()):
+            w = self.obstacles_frame.layout().itemAt(i).widget()
+            if w != None and isinstance(w, PedsimAgentWidget):
+                count += 1
+            if w != None and isinstance(w, FlatlandObjectWidget):
+                count += 1
+        return count
+
+    def generateName(self):
+        self.lastNameId += 1
+        return str(self.lastNameId)
+
     def keyPressEvent(self, event: QtGui.QKeyEvent):
         if event.key() == QtCore.Qt.Key.Key_Escape or event.key() == QtCore.Qt.Key.Key_Return:
             self.disableAddWaypointMode()
@@ -784,14 +801,14 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
                 if isinstance(widget, PedsimAgentWidget):
                     widget.save()
                     agent = copy.deepcopy(widget.pedsimAgent)
-                    agent.name += str(self.numObstacles + 1)
+                    agent.name = self.generateName()
                     agent.pos[0] += 1.0
                     agent.pos[1] += 1.0
                     self.addPedsimAgentWidget(agent)
                 elif isinstance(widget, FlatlandObjectWidget):
                     widget.save()
                     obj = copy.deepcopy(widget.flatlandObject)
-                    obj.name += str(self.numObstacles + 1)
+                    obj.name = self.generateName()
                     obj.pos[0] += 1.0
                     obj.pos[1] += 1.0
                     self.addFlatlandObjectWidget(obj)

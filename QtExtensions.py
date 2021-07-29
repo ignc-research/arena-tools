@@ -49,15 +49,29 @@ class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
 
         # add text item for displaying the name next to the item
         self.textItem = QtWidgets.QGraphicsTextItem("")
-        self.textItem.setScale(0.05)
+        self.textItem.setScale(0.035)
         parentWidget.graphicsScene.addItem(self.textItem)
         self.updateTextItemPos()
 
         # catch key presses for interacting with the item in the scene
         self.keyPressEater = KeyPressEater(self.handleEvent)
+        
+        self.oldItemPos = self.scenePos()
 
     def updateTextItemPos(self):
-        self.textItem.setPos(self.mapToScene(self.transformOriginPoint()))
+        # get radius of bounding circle
+        rect = self.path().boundingRect()
+        center = rect.center()
+        point = rect.topLeft()
+        diff = point - center
+        radius = np.sqrt(diff.x() ** 2 + diff.y() ** 2)
+        # get cartesian coordinates from polar coordinates
+        x = np.cos((1/4) * 2 * np.pi) * radius
+        y = np.sin((1/4) * 2 * np.pi) * radius
+        # set text item pos
+        pos = self.mapToScene(self.transformOriginPoint())
+        pos += QtCore.QPointF(x, y)
+        self.textItem.setPos(pos)
 
     def setPosNoEvent(self, x, y):
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, False)
@@ -72,9 +86,16 @@ class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
         return super().itemChange(change, value)
 
     def mousePressEvent(self, mouse_event):
+        for item in self.scene().selectedItems():
+            item.isDragged = True
         self.isDragged = True
+
         self.oldMousePos = mouse_event.scenePos()
         self.oldItemPos = self.scenePos()
+        # save positions for all items in scene
+        for item in self.scene().items():
+            if hasattr(item, "oldItemPos"):
+                item.oldItemPos = item.scenePos()
         self.oldItemRotation = self.rotation()
         modifier = QtWidgets.QApplication.keyboardModifiers()
         if modifier == QtCore.Qt.KeyboardModifier.ControlModifier:
@@ -91,14 +112,18 @@ class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
             angle = np.arctan2(diff.y(), diff.x())
             angle = 360 * angle / (2 * np.pi)  # convert radians to degrees
             self.setRotation(angle)
+            self.updateTextItemPos()
         # translate
         elif self.isDragged:
             diff = mouse_event.scenePos() - self.oldMousePos
-            new_pos = self.oldItemPos + diff
-            self.setPos(new_pos)
+            for item in self.scene().selectedItems():
+                if hasattr(item, "oldItemPos"):
+                    item.setPos(item.oldItemPos + diff)
 
     def mouseReleaseEvent(self, mouse_event):
-        self.isDragged = False
+        for item in self.scene().selectedItems():
+            if hasattr(item, "isDragged"):
+                item.isDragged = False
         return super().mouseReleaseEvent(mouse_event)
 
     def mouseDoubleClickEvent(self, mouse_event):
@@ -127,7 +152,6 @@ class ArenaGraphicsEllipseItem(QtWidgets.QGraphicsEllipseItem):
     def __init__(self, xSpinBox: QtWidgets.QDoubleSpinBox = None, ySpinBox: QtWidgets.QDoubleSpinBox = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setFlags(
-            QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable |
             QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable |
             QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
             )
@@ -152,6 +176,9 @@ class ArenaGraphicsEllipseItem(QtWidgets.QGraphicsEllipseItem):
         self.xSpinBox = xSpinBox
         self.ySpinBox = ySpinBox
 
+        self.oldItemPos = self.scenePos()
+        self.ctrlPressed = False
+
     def enableTextItem(self, scene: QtWidgets.QGraphicsScene, text: str):
         '''
         Add QGraphicsTextItem to scene and set its text.
@@ -163,7 +190,7 @@ class ArenaGraphicsEllipseItem(QtWidgets.QGraphicsEllipseItem):
 
     def updateTextItemPos(self):
         if self.textItemEnabled:
-            self.textItem.setPos(self.mapToScene(self.transformOriginPoint()))
+            self.textItem.setPos(self.scenePos())
 
     def setPosNoEvent(self, x, y):
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, False)
@@ -181,11 +208,44 @@ class ArenaGraphicsEllipseItem(QtWidgets.QGraphicsEllipseItem):
         return super().itemChange(change, value)
 
     def mousePressEvent(self, mouse_event):
+        for item in self.scene().selectedItems():
+            item.isDragged = True
         self.isDragged = True
+
+        self.oldMousePos = mouse_event.scenePos()
+        self.oldItemPos = self.scenePos()
+        # save positions for all items in scene
+        for item in self.scene().items():
+            if hasattr(item, "oldItemPos"):
+                item.oldItemPos = item.scenePos()
+        self.oldItemRotation = self.rotation()
+        modifier = QtWidgets.QApplication.keyboardModifiers()
+        if modifier == QtCore.Qt.KeyboardModifier.ControlModifier:
+            self.ctrlPressed = True
+        else:
+            self.ctrlPressed = False
+
         return super().mousePressEvent(mouse_event)
 
+    def mouseMoveEvent(self, mouse_event):
+        # rotate
+        if self.isDragged and self.ctrlPressed:
+            diff = mouse_event.scenePos() - self.oldMousePos
+            angle = np.arctan2(diff.y(), diff.x())
+            angle = 360 * angle / (2 * np.pi)  # convert radians to degrees
+            self.setRotation(angle)
+            self.updateTextItemPos()
+        # translate
+        elif self.isDragged:
+            diff = mouse_event.scenePos() - self.oldMousePos
+            for item in self.scene().selectedItems():
+                if hasattr(item, "oldItemPos"):
+                    item.setPos(item.oldItemPos + diff)
+
     def mouseReleaseEvent(self, mouse_event):
-        self.isDragged = False
+        for item in self.scene().selectedItems():
+            if hasattr(item, "isDragged"):
+                item.isDragged = False
         return super().mouseReleaseEvent(mouse_event)
 
 
@@ -558,6 +618,7 @@ class ArenaQGraphicsView(QtWidgets.QGraphicsView):
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.setSceneRect(-200, -200, 400, 400)
         self.zoomFactor = 1.0
+        self.setViewportUpdateMode(QtWidgets.QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
 
         # add coordinate system lines
         pen = QtGui.QPen()
@@ -573,6 +634,11 @@ class ArenaQGraphicsView(QtWidgets.QGraphicsView):
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         self.lastMousePos = event.pos()
+        if event.buttons() & QtCore.Qt.MouseButton.RightButton:
+            self.setDragMode(QtWidgets.QGraphicsView.DragMode.RubberBandDrag)
+        if event.buttons() & QtCore.Qt.MouseButton.LeftButton:
+            self.setDragMode(QtWidgets.QGraphicsView.DragMode.ScrollHandDrag)
+
         return super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
