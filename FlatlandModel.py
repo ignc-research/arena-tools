@@ -1,3 +1,4 @@
+from HelperFunctions import normalize_angle
 from PyQt5 import QtGui, QtCore, QtWidgets
 from enum import Enum
 import yaml
@@ -237,5 +238,5 @@ class FlatlandObject():
         d["name"] = self.name
         d["model_path"] = self.flatlandModel.path
         d["pos"] = [float(val) for val in self.pos]
-        d["angle"] = self.angle
+        d["angle"] = round(normalize_angle(self.angle), 3)
         return d

@@ -37,3 +37,13 @@ def round_one_and_half_decimal_places(x: float) -> float:
     else:
         # x is X.X0 or X.X5 already
         return x
+
+def normalize_angle(angle: float) -> float:
+    import math
+    # make sure angle is positive
+    while angle < 0:
+        angle += 2 * math.pi
+    # make sure angle is between 0 and 2 * pi
+    angle = math.fmod(angle, 2 * math.pi)
+    return angle
+    
