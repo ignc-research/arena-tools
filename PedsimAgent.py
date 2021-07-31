@@ -259,8 +259,6 @@ class PedsimAgent():
 
         msg = Ped()
 
-        msg.name = self.name
-    
         msg.id = self.id
         msg.pos = Point(self.pos[0], self.pos[1], 0)
         msg.type = self.type
