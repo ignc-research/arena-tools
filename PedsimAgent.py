@@ -37,8 +37,6 @@ class PedsimInteractiveObstacle():
 
 
 class PedsimAgent():
-    # agentChanged = QtCore.pyqtSignal()
-
     def __init__(self, name = "", flatlandModelPath = "") -> None:
         self.name = name
 
@@ -251,3 +249,53 @@ class PedsimAgent():
         a.waypoint_mode = d["waypoint_mode"]
 
         return a
+
+    def getPedMsg(self):
+        try:
+            from pedsim_msgs.msg import Ped
+            from geometry_msgs.msg import Point
+        except:
+            return None
+
+        msg = Ped()
+
+        msg.name = self.name
+    
+        msg.id = self.id
+        msg.pos = Point(self.pos[0], self.pos[1], 0)
+        msg.type = self.type
+        msg.yaml_file = self.yaml_file
+        msg.number_of_peds = self.number_of_peds
+        msg.vmax = self.vmax
+
+        msg.start_up_mode = self.start_up_mode
+        msg.wait_time = self.wait_time
+        msg.trigger_zone_radius = self.trigger_zone_radius
+
+        msg.chatting_probability = self.chatting_probability
+        msg.tell_story_probability = self.tell_story_probability
+        msg.group_talking_probability = self.group_talking_probability
+        msg.talking_and_walking_probability = self.talking_and_walking_probability
+        msg.requesting_service_probability = self.requesting_service_probability
+        msg.requesting_guide_probability = self.requesting_guide_probability
+        msg.requesting_follower_probability = self.requesting_follower_probability
+
+        msg.max_talking_distance = self.max_talking_distance
+        msg.max_servicing_radius = self.max_servicing_radius
+
+        msg.talking_base_time = self.talking_base_time
+        msg.tell_story_base_time = self.tell_story_base_time
+        msg.group_talking_base_time = self.group_talking_base_time
+        msg.talking_and_walking_base_time = self.talking_and_walking_base_time
+        msg.receiving_service_base_time = self.receiving_service_base_time
+        msg.requesting_service_base_time = self.requesting_service_base_time
+
+        msg.force_factor_desired = self.force_factor_desired
+        msg.force_factor_obstacle = self.force_factor_obstacle
+        msg.force_factor_social = self.force_factor_social
+        msg.force_factor_robot = self.force_factor_robot
+
+        msg.waypoints = [Point(wp[0], wp[1], 0) for wp in self.waypoints]
+        msg.waypoint_mode = self.waypoint_mode
+
+        return msg
