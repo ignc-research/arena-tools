@@ -135,8 +135,8 @@ class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
             and event.key() == QtCore.Qt.Key.Key_Delete
             and self.isSelected()):
             self.remove()
-            return True
 
+        # return false so event is not consumed and can be handled by other items aswell
         return False
 
     def remove(self):
@@ -599,6 +599,17 @@ class ArenaQDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     def stepDown(self):
         new_value = round(self.value() - self.singleStep(), 1)
         self.setValue(new_value)
+
+
+
+class ArenaQGraphicsScene(QtWidgets.QGraphicsScene):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def removeSelected(self):
+        for item in self.selectedItems():
+            if isinstance(item, ArenaGraphicsPathItem):
+                item.remove()
 
 
 

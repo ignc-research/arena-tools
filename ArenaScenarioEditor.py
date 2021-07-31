@@ -120,7 +120,6 @@ class PedsimAgentWidget(QtWidgets.QFrame):
         self.graphicsScene = graphicsScene
         self.graphicsView = graphicsView
         self.pedsimAgent = pedsimAgentIn
-        self.graphicsPathItem = None
 
         # create path item
         self.graphicsPathItem = ArenaGraphicsPathItem(self)
@@ -661,7 +660,7 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         drawing_frame.setFrameStyle(QtWidgets.QFrame.Shape.Box | QtWidgets.QFrame.Shadow.Raised)
         self.centralWidget().layout().addWidget(drawing_frame, 0, 1, -1, -1)
         ## graphicsscene
-        self.gscene = QtWidgets.QGraphicsScene()
+        self.gscene = ArenaQGraphicsScene()
         ## graphicsview
         self.gview = ArenaQGraphicsView(self.gscene)
         self.gview.scale(0.25, 0.25)  # zoom out a bit
@@ -804,14 +803,22 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
                     agent.name = self.generateName()
                     agent.pos[0] += 1.0
                     agent.pos[1] += 1.0
-                    self.addPedsimAgentWidget(agent)
+                    new_widget = self.addPedsimAgentWidget(agent)
+                    # select new item
+                    new_widget.graphicsPathItem.setSelected(True)
+                    # unselect old item
+                    widget.graphicsPathItem.setSelected(False)
                 elif isinstance(widget, FlatlandObjectWidget):
                     widget.save()
                     obj = copy.deepcopy(widget.flatlandObject)
                     obj.name = self.generateName()
                     obj.pos[0] += 1.0
                     obj.pos[1] += 1.0
-                    self.addFlatlandObjectWidget(obj)
+                    new_widget = self.addFlatlandObjectWidget(obj)
+                    # select new item
+                    new_widget.graphicsPathItem.setSelected(True)
+                    # unselect old item
+                    widget.graphicsPathItem.setSelected(False)
 
         return super().keyPressEvent(event)
 
