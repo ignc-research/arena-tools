@@ -25,6 +25,7 @@ class ArenaScenario():
         d["robot_position"] = [float(value) for value in self.robotPosition]
         d["robot_goal"] = [float(value) for value in self.robotGoal]
         d["map_path"] = self.mapPath
+        d["format"] = "arena-tools"
 
         return d
 
