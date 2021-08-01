@@ -51,6 +51,8 @@ def get_current_user_path(path_in: str) -> str:
     Convert a path from another user to the current user, for example:
     "/home/alice/catkin_ws" -> "/home/bob/catkin_ws"
     '''
+    if path_in == "":
+        return ""
     from pathlib import Path
     path = Path(path_in)
     new_path = Path.home().joinpath(*path.parts[3:])
