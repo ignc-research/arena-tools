@@ -4,6 +4,7 @@ import yaml
 import json
 from PedsimAgent import *
 from FlatlandModel import *
+from HelperFunctions import *
 
 class ArenaScenario():
     def __init__(self):
@@ -41,7 +42,7 @@ class ArenaScenario():
         # self.interactiveObstacles = ...TODO
         self.robotPosition = np.array([d["robot_position"][0], d["robot_position"][1]])
         self.robotGoal = np.array([d["robot_goal"][0], d["robot_goal"][1]])
-        self.mapPath = d["map_path"]
+        self.mapPath = get_current_user_path(d["map_path"])
 
     def saveToFile(self, path_in: str = "") -> bool:
         '''

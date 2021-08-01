@@ -451,7 +451,7 @@ class PedsimAgentEditor(QtWidgets.QWidget):
             self.requestingFollowerProbabilityLabel.show()
             self.requestingFollowerProbabilitySlider.show()
 
-        elif agent_type == PedsimAgentType.VEHICLE:
+        elif agent_type == PedsimAgentType.FORKLIFT:
             # max talking distance
             self.maxTalkingDistanceLabel.hide()
             self.maxTalkingDistanceSlider.hide()

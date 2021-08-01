@@ -1,6 +1,7 @@
 import numpy as np
 from enum import Enum
 from FlatlandModel import FlatlandModel
+from HelperFunctions import *
 
 class PedsimStartupMode(Enum):
     DEFAULT = 0
@@ -19,7 +20,7 @@ class PedsimAgentType(Enum):
     ADULT = 0
     CHILD = 1
     ELDER = 2
-    VEHICLE = 3
+    FORKLIFT = 3
     SERVICEROBOT = 4
 
 
@@ -214,7 +215,7 @@ class PedsimAgent():
         a.id = d["id"]
         a.pos = np.array([d["pos"][0], d["pos"][1]])
         a.type = d["type"]
-        a.yaml_file = d["yaml_file"]
+        a.yaml_file = get_current_user_path(d["yaml_file"])
         a.number_of_peds = d["number_of_peds"]
         a.vmax = d["vmax"]
 
@@ -246,7 +247,7 @@ class PedsimAgent():
         a.force_factor_robot = d["force_factor_robot"]
 
         a.waypoints = [np.array([wp[0], wp[1]]) for wp in d["waypoints"]]
-        a.waypoint_mode = d["waypoint_mode"]
+        a.waypoint_mode = int(d["waypoint_mode"])
 
         return a
 

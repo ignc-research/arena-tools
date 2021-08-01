@@ -1,4 +1,4 @@
-from HelperFunctions import normalize_angle
+from HelperFunctions import *
 from PyQt5 import QtGui, QtCore, QtWidgets
 from enum import Enum
 import yaml
@@ -229,7 +229,7 @@ class FlatlandObject():
 
     def loadFromDict(self, d: dict):
         self.name = d["name"]
-        self.flatlandModel.load(d["model_path"])
+        self.flatlandModel.load(get_current_user_path(d["model_path"]))
         self.pos = np.array([float(val) for val in d["pos"]])
         self.angle = float(d["angle"])
 
