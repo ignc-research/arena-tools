@@ -125,17 +125,16 @@ class PedsimAgentWidget(QtWidgets.QFrame):
         self.graphicsPathItem = ArenaGraphicsPathItem(self)
         # add to scene
         self.graphicsScene.addItem(self.graphicsPathItem)
-
+        # setup widgets
         self.setup_ui()
-
-        self.graphicsPathItem.textItem.setPlainText(self.name_label.text())
-
+        # setup pedsim agent editor
         self.pedsimAgentEditor = PedsimAgentEditor(self, parent=self.parent(), flags=QtCore.Qt.WindowType.Window)
         self.pedsimAgentEditor.editorSaved.connect(self.handleEditorSaved)
+
+        # setup waypoints
         self.addWaypointModeActive = False
         self.activeModeWindow = ActiveModeWindow(self)
         graphicsView.clickedPos.connect(self.handleGraphicsViewClick)
-
         # GraphicsItem for drawing a path connecting the waypoints
         self.waypointPathItem = QtWidgets.QGraphicsPathItem()
         ## create brush
@@ -159,7 +158,7 @@ class PedsimAgentWidget(QtWidgets.QFrame):
         self.setFrameStyle(QtWidgets.QFrame.Shape.Box | QtWidgets.QFrame.Shadow.Raised)
 
         # name label
-        self.name_label = QtWidgets.QLabel("Ped " + str(self.id))
+        self.name_label = QtWidgets.QLabel(self.pedsimAgent.name)
         self.layout().addWidget(self.name_label, 0, 0)
 
         # edit button
@@ -412,14 +411,6 @@ class FlatlandObjectWidget(QtWidgets.QFrame):
         self.browse_button.clicked.connect(self.onBrowseClicked)
         self.layout().addWidget(self.browse_button, 2, 1, 1, -1)
 
-        # set default path to simulator_setup/obstacles if it exists
-        sim_setup_path = get_ros_package_path("simulator_setup")
-        if sim_setup_path != "":
-            default_model = "shelf.yaml"
-            path = os.path.join(sim_setup_path, "obstacles", default_model)
-            if os.path.exists(path):
-                self.flatlandObject.flatlandModel.load(path)
-                self.browse_button.setText(default_model)
 
     def onBrowseClicked(self):
         default_folder = get_ros_package_path("simulator_setup")
@@ -489,6 +480,11 @@ class FlatlandObjectWidget(QtWidgets.QFrame):
         self.posYSpinBox.setValue(self.flatlandObject.pos[1])
         # update name label
         self.name_label.setText(self.flatlandObject.name)
+        # update browse button
+        if self.flatlandObject.flatlandModel.path == "":
+            self.browse_button.setText("Browse...")
+        else:
+            self.browse_button.setText(pathlib.Path(self.flatlandObject.flatlandModel.path).parts[-1])
         # update item scene
         self.updateGraphicsPathItemFromFlatlandObject()
 
@@ -625,6 +621,11 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         self.currentSavePath = ""
         self.copied = []
         self.lastNameId = 0
+
+        # set default map to empty map if it exists
+        path = pathlib.Path(get_ros_package_path("simulator_setup")) / "maps" / "map_empty" / "map.yaml"
+        if path.is_file():
+            self.setMap(str(path))
 
     def setup_ui(self):
         self.setWindowTitle("Flatland Scenario Editor")
@@ -794,6 +795,22 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
             self.copied = self.gscene.selectedItems()
 
         if event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier and event.key() == QtCore.Qt.Key.Key_V:
+            self.pasteElements()
+
+        if event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier and event.key() == QtCore.Qt.Key.Key_D:
+            self.toggleWaypointMode()
+
+        return super().keyPressEvent(event)
+
+    def toggleWaypointMode(self):
+        # active waypoint mode for selected pedsim agents
+        for item in self.gscene.selectedItems():
+            if hasattr(item, "parentWidget"):
+                widget = item.parentWidget
+                if isinstance(widget, PedsimAgentWidget):
+                    widget.onAddWaypointClicked()
+
+    def pasteElements(self):
             # duplicate copied items
             for item in self.copied:
                 widget = item.parentWidget
@@ -801,13 +818,21 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
                     widget.save()
                     agent = copy.deepcopy(widget.pedsimAgent)
                     agent.name = self.generateName()
+                    # move agent and waypoints a bit
                     agent.pos[0] += 1.0
                     agent.pos[1] += 1.0
+                    for wp in agent.waypoints:
+                        wp[0] += 1.0
+                        wp[1] += 1.0
                     new_widget = self.addPedsimAgentWidget(agent)
-                    # select new item
+                    # select new item and waypoints
                     new_widget.graphicsPathItem.setSelected(True)
-                    # unselect old item
+                    for w in new_widget.getWaypointWidgets():
+                        w.ellipseItem.setSelected(True)
+                    # unselect old item and waypoints
                     widget.graphicsPathItem.setSelected(False)
+                    for w in widget.getWaypointWidgets():
+                        w.ellipseItem.setSelected(False)
                 elif isinstance(widget, FlatlandObjectWidget):
                     widget.save()
                     obj = copy.deepcopy(widget.flatlandObject)
@@ -819,8 +844,6 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
                     new_widget.graphicsPathItem.setSelected(True)
                     # unselect old item
                     widget.graphicsPathItem.setSelected(False)
-
-        return super().keyPressEvent(event)
 
     def onNewScenarioClicked(self):
         pass

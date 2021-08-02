@@ -49,6 +49,7 @@ class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
 
         # add text item for displaying the name next to the item
         self.textItem = QtWidgets.QGraphicsTextItem("")
+        self.textItem.setZValue(5)
         self.textItem.setScale(0.035)
         parentWidget.graphicsScene.addItem(self.textItem)
         self.updateTextItemPos()
@@ -58,19 +59,28 @@ class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
         
         self.oldItemPos = self.scenePos()
 
+    # Alternative version of updateTextItemPos().
+    # Calculate the bounding circle of the item and
+    # place the text at an angle of 1/2 * PI.
+    # def updateTextItemPos(self):
+    #     # get radius of bounding circle
+    #     rect = self.path().boundingRect()
+    #     center = rect.center()
+    #     point = rect.topLeft()
+    #     diff = point - center
+    #     radius = np.sqrt(diff.x() ** 2 + diff.y() ** 2)
+    #     # get cartesian coordinates from polar coordinates
+    #     x = np.cos((1/4) * 2 * np.pi) * radius
+    #     y = np.sin((1/4) * 2 * np.pi) * radius
+    #     # set text item pos
+    #     pos = self.mapToScene(self.transformOriginPoint())
+    #     pos += QtCore.QPointF(x, y)
+    #     self.textItem.setPos(pos)
+
     def updateTextItemPos(self):
-        # get radius of bounding circle
-        rect = self.path().boundingRect()
-        center = rect.center()
-        point = rect.topLeft()
-        diff = point - center
-        radius = np.sqrt(diff.x() ** 2 + diff.y() ** 2)
-        # get cartesian coordinates from polar coordinates
-        x = np.cos((1/4) * 2 * np.pi) * radius
-        y = np.sin((1/4) * 2 * np.pi) * radius
-        # set text item pos
         pos = self.mapToScene(self.transformOriginPoint())
-        pos += QtCore.QPointF(x, y)
+        # move a bit because the anchor position of text is top left
+        pos += QtCore.QPointF(-0.3, -0.5)
         self.textItem.setPos(pos)
 
     def setPosNoEvent(self, x, y):
