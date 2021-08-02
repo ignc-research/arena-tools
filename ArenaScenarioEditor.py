@@ -436,7 +436,7 @@ class FlatlandObjectWidget(QtWidgets.QFrame):
 
     def handleMouseDoubleClick(self):
         # function will be called by the graphics item
-        pass
+        self.onBrowseClicked()
 
     def handleItemChange(self):
         # function will be called by the graphics item
