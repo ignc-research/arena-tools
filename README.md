@@ -24,14 +24,29 @@ Scenario Editor is a tool to create scenarios for use in Arena-Rosnav. Run it us
 ```
 python ArenaScenarioEditor.py
 ```
+## Example Usage
+
+
+https://user-images.githubusercontent.com/74921738/127912004-4e97af74-b6b8-4501-a463-afbce78a0a13.mov
+
+
+## General Usage
+- Drag the scene or items around by pressing the LEFT mouse button
+- Zoom in and out using the mouse scroll wheel
+- Select multiple items by drawing a selection rectangle pressing the RIGHT mouse button
+- Copy selected items by pressing CTRL+C
+- Paste items by pressing CTRL+V
+- Delete selected items by pressing DELETE on your keyboard
+
 
 ## Load and Save Scenarios
 Click on File->Open or File->Save. Scenarios can be saved in YAML or JSON format, just use the according file ending.
+
 ## Set Scenario Map
-Click on Elements->Set Map. Select a map.yaml file in the format of a typical ROS map (see [map_server Docs](http://wiki.ros.org/map_server#YAML_format)). The map will be loaded into the scene. You can drag the scene around using left mouse button and zoom in and out using scroll wheel.
+Click on Elements->Set Map. Select a map.yaml file in the format of a typical ROS map (see [map_server Docs](http://wiki.ros.org/map_server#YAML_format)). The map will be loaded into the scene.
 
 ## Set Robot initial position and goal
-Robot position and goal is always part of a scenario. Position them by dragging the red and green circle to the desired position.
+Robot position and goal is always part of a scenario.
 
 ## Add Pedsim Agents
 
@@ -39,12 +54,9 @@ https://user-images.githubusercontent.com/74921738/126493822-88e94f7b-3595-4cce-
 
 
 - Click on Elements->Add Pedsim Agent. An agent widget will be added on the left and the default Flatland Model for Pedsim Agents will be added to the scene.
-- Drag the model around to position it in the scene.
 - Open the Pedsim Agent Editor by clicking on Edit or double click the model in the scene. Here you can set the Flatland Model, type and all other attributes of your agent.
-- Click on 'Add Waypoints...' to enter Waypoint Mode. Click anywhere in the scene to add a waypoint for this agent. Press ESC or click OK when finished.
-- Move a waypoint by dragging it in the scene.
-- Delete a waypoint by clicking on the red X or by selecting it in the scene and  hitting DELETE on your keyboard.
-- Delete the agent by clicking on Delete or by selecting it in the scene and hitting DELETE on your keyboard.
+- Click on 'Add Waypoints...' or select an agent and press CTRL+D to enter Waypoint Mode. Click anywhere in the scene to add a waypoint for this agent. Press ESC or click OK when finished.
+
 
 ## Add Flatland Object (Static Obstacle)
 
@@ -57,9 +69,7 @@ https://user-images.githubusercontent.com/74921738/127176906-98ab58bb-9c40-4d56-
 
 
 - Click on Elements->Add Flatland Object. A widget will be added on the left and the default Flatland Model for objects will be added to the scene.
-- Choose a model YAML file by clicking on the button in the widget
-- Drag the model around to position it in the scene.
-- Delete the object by clicking on Delete or by selecting it in the scene and hitting DELETE on your keyboard.
+- Choose a model YAML file by double clicking the item in the scene
 - Rotate object by holding CTRL while clicking on the object (keep mouse button pressed) and dragging the mouse.
 
 # Flatland Model Editor
