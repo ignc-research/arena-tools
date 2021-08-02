@@ -59,13 +59,13 @@ class PedsimAgent():
         self.max_talking_distance = 5.0
         self.max_servicing_radius = 5.0
 
-        self.chatting_probability = 0.01
+        self.chatting_probability = 0.0
         self.tell_story_probability = 0.0
-        self.group_talking_probability = 0.01
-        self.talking_and_walking_probability = 0.01
-        self.requesting_service_probability = 0.01
-        self.requesting_guide_probability = 0.01
-        self.requesting_follower_probability = 0.01
+        self.group_talking_probability = 0.0
+        self.talking_and_walking_probability = 0.0
+        self.requesting_service_probability = 0.0
+        self.requesting_guide_probability = 0.0
+        self.requesting_follower_probability = 0.0
 
         self.talking_base_time = 10.0
         self.tell_story_base_time = 0.0
