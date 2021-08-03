@@ -402,7 +402,7 @@ class ArenaQGraphicsPolygonItem(QtWidgets.QGraphicsPolygonItem):
     def getRoundedPolygon(self) -> QtGui.QPolygonF:
         mapped_polygon = self.mapToScene(self.polygon())
         for i in range(len(mapped_polygon)):
-            mapped_polygon[i] = QtCore.QPointF(round_one_and_half_decimal_places(mapped_polygon[i].x()), round_one_and_half_decimal_places(mapped_polygon[i].y()))
+            mapped_polygon[i] = QtCore.QPointF(round_to_closest_20th(mapped_polygon[i].x()), round_to_closest_20th(mapped_polygon[i].y()))
         rounded_polygon = self.mapFromScene(mapped_polygon)
         return rounded_polygon
 
