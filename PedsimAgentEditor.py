@@ -127,7 +127,7 @@ class PedsimAgentEditor(QtWidgets.QWidget):
 
         # wait time
         ## label
-        self.waitTimeLabel = QtWidgets.QLabel("Wait Time")
+        self.waitTimeLabel = QtWidgets.QLabel("Wait Time (seconds)")
         self.waitTimeLabel.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
         self.scrollAreaFrame.layout().addWidget(self.waitTimeLabel, vertical_idx, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
         ## spin box
