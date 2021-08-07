@@ -49,7 +49,7 @@ class ArenaGraphicsPathItem(QtWidgets.QGraphicsPathItem):
 
         # add text item for displaying the name next to the item
         self.textItem = QtWidgets.QGraphicsTextItem("")
-        self.textItem.setZValue(5)
+        self.textItem.setZValue(5)  # place text item above everything else
         self.textItem.setScale(0.035)
         parentWidget.graphicsScene.addItem(self.textItem)
         self.updateTextItemPos()

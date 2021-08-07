@@ -27,8 +27,30 @@ def round_to_closest_20th(x: float) -> float:
     """
     return round(x * 20) / 20
 
+def rad_to_deg(angle: float) -> float:
+    import math
+    angle = normalize_angle_rad(angle)
+    angle = 360.0 * angle / (2.0 * math.pi)
+    return angle
 
-def normalize_angle(angle: float) -> float:
+def deg_to_rad(angle: float) -> float:
+    import math
+    angle = normalize_angle_deg(angle)
+    angle = 2 * math.pi * angle / 360.0
+    return angle
+
+def normalize_angle_deg(angle: float) -> float:
+    import math
+
+    # make sure angle is positive
+    while angle < 0:
+        angle += 360
+
+    # make sure angle is between 0 and 360
+    angle = math.fmod(angle, 360.0)
+    return angle
+
+def normalize_angle_rad(angle: float) -> float:
     import math
 
     # make sure angle is positive
@@ -38,6 +60,11 @@ def normalize_angle(angle: float) -> float:
     angle = math.fmod(angle, 2 * math.pi)
     return angle
 
+def normalize_angle(angle: float, rad: bool = True) -> float:
+    if rad:
+        return normalize_angle_rad(angle)
+    else:
+        return normalize_angle_deg(angle)
 
 def get_current_user_path(path_in: str) -> str:
     """
