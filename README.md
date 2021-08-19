@@ -103,7 +103,11 @@ Click on the 'edit'-Button of the Body you want to edit. The Flatland Body Edito
 Not yet implemented.
 
 # Map Generator
-![](img/map_generator.png)
+
+
+https://user-images.githubusercontent.com/74921738/130034174-fa6b334b-e220-47ea-91ba-4bc815663ae5.mov
+
+
 
 Map Generator is a tool to generate random ROS maps. Run it using Python:
 ```
