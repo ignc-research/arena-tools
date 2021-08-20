@@ -4,6 +4,50 @@ import copy
 from FlatlandModel import *
 from FlatlandBodyEditor import FlatlandBodyEditor
 from HelperFunctions import *
+from FlatlandPlugin import *
+
+
+class FlatlandPluginWidget(QtWidgets.QWidget):
+    """
+    This is a row in the plugins frame.
+    """
+
+    def __init__(self, id: int, flatland_model: FlatlandModel, **kwargs):
+        super().__init__(**kwargs)
+        self.setup_ui()
+        self.id = id
+        self.flatland_model = flatland_model
+
+    def setup_ui(self):
+        self.setLayout(QtWidgets.QGridLayout())
+        layout_idx = 0
+
+        # plugin type dropdown
+        self.plugin_type_combo_box = QtWidgets.QComboBox()
+        for plugin_type in FlatlandPluginType:
+            self.plugin_type_combo_box.insertItem(
+                plugin_type.value, plugin_type.name.lower()
+            )
+        self.plugin_type_combo_box.setFixedSize(150, 20)
+        self.plugin_type_combo_box.currentIndexChanged.connect(
+            self.on_plugin_type_changed
+        )
+        self.layout().addWidget(self.plugin_type_combo_box, layout_idx, 0)
+        layout_idx += 1
+
+        # pedsim movement
+        ## agent topic
+        ### label
+        label = QtWidgets.QLabel("Agent Topic")
+        self.layout().addWidget(label, layout_idx, 0)
+        ### line edit
+        line_edit = QtWidgets.QLineEdit()
+        self.layout().addWidget(line_edit, layout_idx, 1)
+        layout_idx += 1
+
+    def on_plugin_type_changed(self):
+        # show  and hide all relevant widgets
+        pass
 
 
 class FlatlandBodyWidget(QtWidgets.QWidget):
@@ -71,6 +115,7 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
         self.model = None
         self.last_saved_model = None
         self.body_id = 0
+        self.plugin_id = 0
         self.create_new_model()
 
     def setup_ui(self):
@@ -92,6 +137,9 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
 
         # add frame to add and edit bodies
         self.setup_bodies_frame()
+
+        # add frame to add and edit plugins
+        self.setup_plugins_frame()
 
         # add expanding spacer item
         spacer = QtWidgets.QSpacerItem(
@@ -125,6 +173,38 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
 
         # add this frame to layout
         self.centralWidget().layout().addWidget(frame)
+
+    def setup_plugins_frame(self):
+        frame = QtWidgets.QFrame()
+        frame.setLayout(QtWidgets.QGridLayout())
+
+        # add title
+        label = QtWidgets.QLabel("## Plugins")
+        label.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
+        frame.layout().addWidget(label, 0, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
+
+        # add button
+        self.button = QtWidgets.QPushButton("Add Plugin")
+        self.button.setFixedSize(200, 30)
+        self.button.clicked.connect(self.on_add_plugin_button_clicked)
+        frame.layout().addWidget(self.button, 0, 1, QtCore.Qt.AlignmentFlag.AlignRight)
+
+        # add body list
+        self.plugins_list_frame = QtWidgets.QFrame()
+        self.plugins_list_frame.setLayout(QtWidgets.QVBoxLayout())
+        frame.layout().addWidget(self.plugins_list_frame, 1, 0, 1, -1)
+
+        # add this frame to layout
+        self.centralWidget().layout().addWidget(frame)
+
+    def on_add_plugin_button_clicked(self):
+        w = FlatlandPluginWidget(self.plugin_id, self.model, parent=self)
+        return self.add_flatland_plugin_widget(w)
+
+    def add_flatland_plugin_widget(self, w: FlatlandPluginWidget):
+        self.plugins_list_frame.layout().addWidget(w)
+        self.plugin_id += 1
+        return w
 
     def get_body_widgets(self):
         widgets = []
