@@ -47,7 +47,8 @@ class FlatlandPluginWidget(QtWidgets.QWidget):
 
     def on_plugin_type_changed(self):
         # show  and hide all relevant widgets
-        pass
+        if self.plugin_type_combo_box.currentIndex() == FlatlandPluginType.PEDSIMMOVEMENT:
+            pass
 
 
 class FlatlandBodyWidget(QtWidgets.QWidget):
