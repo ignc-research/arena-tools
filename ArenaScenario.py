@@ -50,7 +50,7 @@ class ArenaScenario():
         - path_in: path to save file
         - format: format of save file, can be "json" or "yaml"
         '''
-        if os.path.exists(path_in):
+        if os.path.exists(path_in):  # TODO is this not always false when it's a new filename?
             self.path = path_in
 
         if self.path == "":

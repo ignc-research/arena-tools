@@ -1,36 +1,125 @@
 from PyQt5 import QtGui, QtCore, QtWidgets
-import numpy as np
-import os
-import yaml
+import json
 import pathlib
-import re
-from typing import List
-from PIL import Image
-from enum import Enum
 from HelperFunctions import *
 from QtExtensions import *
+from ArenaScenarioEditor import RosMapData
+
+# TODO
+# fix waypoint window not closing on ESC
+
+
+class RobotPath:
+    def __init__(self):
+        self.initial_pos = [0, 0]
+        self.subgoals = []  # list of points [x, y]
+
+    def toDict(self):
+        d = {}
+        d["initial_pos"] = self.initial_pos
+        d["subgoals"] = self.subgoals
+        return d
+
+
+class PathData:
+    def __init__(self):
+        # path to map file
+        self.map_path = ""
+        # dict of paths; key: ID of path, value: RobotPath object
+        self.robot_paths = {}
+
+        self.num_images = 0
+
+    def toDict(self):
+        d = {}
+        d["map_path"] = self.map_path
+        d["num_images"] = self.num_images
+        path_list = []
+        for robot_path in self.robot_paths.values():
+            path_list.append(robot_path.toDict())
+        d["robot_paths"] = path_list
+        return d
+
+    def saveToFile(self, path_in: str):
+        with open(path_in, "w") as file:
+            data = self.toDict()
+            json.dump(data, file, indent=4)
+
 
 class PathCreator(QtWidgets.QMainWindow):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         # add graphicsscene and graphicsview
-        self.scene = QtWidgets.QGraphicsScene()
-        self.view = QtWidgets.QGraphicsView(self.scene)
+        self.scene = ArenaQGraphicsScene()
+        self.view = ArenaQGraphicsView(self.scene)
         self.view.setDragMode(QtWidgets.QGraphicsView.DragMode.ScrollHandDrag)
         self.view.setSceneRect(-1000, -1000, 2000, 2000)
-        self.view.fitInView(QtCore.QRectF(-1.5, -1.5, 100, 100), mode=QtCore.Qt.AspectRatioMode.KeepAspectRatio)
-        self.view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.view.fitInView(
+            QtCore.QRectF(-1.5, -1.5, 25, 25),
+            mode=QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+        )
+        # self.view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        # self.view.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         self.setup_ui()
+
+        # Map variables
+        self.pixmap_item = None
+        self.map_data = None
+        # path data
+        self.path_data = PathData()
+        self.current_path_id = 1
+        self.num_paths = 1
+        # subgoal items
+        self.subgoal_items = []
+
+        # setup robot in scene
+        self.robot_ellipse_item = ArenaGraphicsEllipseItem(
+            None,
+            None,
+            -0.25,
+            -0.25,
+            0.5,
+            0.5,
+            handlePositionChangeMethod=lambda _: self.drawWaypointPath(),
+        )
+        ## start pos
+        self.robot_ellipse_item.setPosNoEvent(0, 0)
+        ## set color
+        brush = QtGui.QBrush(QtGui.QColor("green"), QtCore.Qt.BrushStyle.SolidPattern)
+        self.robot_ellipse_item.setBrush(brush)
+        ## enable text next to item in scene
+        self.robot_ellipse_item.enableTextItem(self.scene, "Robot")
+        ## add to scene
+        self.scene.addItem(self.robot_ellipse_item)
+
+        # setup waypoints
+        self.addWaypointModeActive = False
+        self.activeModeWindow = ActiveModeWindow(self)
+        self.view.clickedPos.connect(self.handleGraphicsViewClick)
+        # GraphicsItem for drawing a path connecting the waypoints
+        self.waypointPathItem = QtWidgets.QGraphicsPathItem()
+        ## create brush
+        brush = QtGui.QBrush(QtGui.QColor(), QtCore.Qt.BrushStyle.NoBrush)
+        self.waypointPathItem.setBrush(brush)
+        ## create pen
+        pen = QtGui.QPen()
+        pen.setColor(QtGui.QColor("lightseagreen"))
+        pen.setWidthF(0.1)
+        pen.setStyle(QtCore.Qt.PenStyle.SolidLine)
+        pen.setCapStyle(QtCore.Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(QtCore.Qt.PenJoinStyle.RoundJoin)
+        self.waypointPathItem.setPen(pen)
+        ## add to scene
+        self.scene.addItem(self.waypointPathItem)
 
     def setup_ui(self):
         self.setWindowTitle("Path Creator")
         self.resize(1100, 600)
         self.move(100, 100)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap('icon.png'), QtGui.QIcon.Selected, QtGui.QIcon.On)
+        icon.addPixmap(QtGui.QPixmap("icon.png"), QtGui.QIcon.Selected, QtGui.QIcon.On)
         self.setWindowIcon(icon)
         layout_index = 0
 
@@ -45,62 +134,96 @@ class PathCreator(QtWidgets.QMainWindow):
 
         # left side frame
         frame = QtWidgets.QFrame()
-        frame.setFrameStyle(QtWidgets.QFrame.Shape.Box | QtWidgets.QFrame.Shadow.Raised)
+        # frame.setFrameStyle(QtWidgets.QFrame.Shape.Box | QtWidgets.QFrame.Shadow.Raised)
         frame.setLayout(QtWidgets.QGridLayout())
-        frame.setSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
+        frame.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum
+        )
         self.splitter.addWidget(frame)
 
-        # width
+        # select map
         ## label
-        width_label = QtWidgets.QLabel("### No. Images")
-        width_label.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
-        frame.layout().addWidget(width_label, layout_index, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
-        ## spinbox
-        self.width_spin_box = QtWidgets.QSpinBox()
-        self.width_spin_box.setRange(1, 10000)
-        self.width_spin_box.setValue(101)
-        self.width_spin_box.setSingleStep(1)
-        self.width_spin_box.setFixedSize(150, 30)
-        self.width_spin_box.valueChanged.connect(self.showPreview)
-        frame.layout().addWidget(self.width_spin_box, layout_index, 1, QtCore.Qt.AlignmentFlag.AlignRight)
-        layout_index += 1
-
-        # folder
-        folder_label = QtWidgets.QLabel("### Map:")
-        folder_label.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
-        frame.layout().addWidget(folder_label, layout_index, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
-        browse_button = QtWidgets.QPushButton("Browse...")
-        browse_button.clicked.connect(self.onBrowseLoadMapClicked)
-        frame.layout().addWidget(browse_button, layout_index, 1, QtCore.Qt.AlignmentFlag.AlignRight)
-        layout_index += 1
+        map_label = QtWidgets.QLabel("### Map:")
+        map_label.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
+        frame.layout().addWidget(map_label, layout_index, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
+        ## map name label
         self.map_name_label = QtWidgets.QLabel("No map selected")
-        
-        self.folder_edit = QtWidgets.QLineEdit("Please select folder")
-        # set default path to simulator_setup/maps if it exists
-        sim_setup_path = get_ros_package_path("simulator_setup")
-        if sim_setup_path != "":
-            self.folder_edit.setText(os.path.join(sim_setup_path, "maps"))
-        frame.layout().addWidget(self.folder_edit, layout_index, 0, 1, -1)
+        self.map_name_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        frame.layout().addWidget(self.map_name_label, layout_index, 1, 1, 1)
+        ## browse button
+        browse_button = QtWidgets.QPushButton("Browse...")
+        browse_button.clicked.connect(self.onBrowseMapsClicked)
+        frame.layout().addWidget(browse_button, layout_index, 3, QtCore.Qt.AlignmentFlag.AlignRight)
         layout_index += 1
 
-        # generate maps button
-        self.generate_maps_button = QtWidgets.QPushButton("Generate 5 maps")
-        self.generate_maps_button.clicked.connect(self.onGenerateMapsClicked)
-        frame.layout().addWidget(self.generate_maps_button, layout_index, 0, 1, -1)
+        ## line
+        frame.layout().addWidget(Line(), layout_index, 0, 1, -1)
         layout_index += 1
 
-        # generate maps result label
-        self.result_label = QtWidgets.QLabel("")
-        self.result_label.setMaximumHeight(50)
-        frame.layout().addWidget(self.result_label, layout_index, 0, 1, -1)
+        # No. images
+        ## label
+        num_images_label = QtWidgets.QLabel("### No. Images")
+        num_images_label.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
+        frame.layout().addWidget(
+            num_images_label, layout_index, 0, QtCore.Qt.AlignmentFlag.AlignLeft
+        )
+        ## spinbox
+        self.num_images_spin_box = QtWidgets.QSpinBox()
+        self.num_images_spin_box.setRange(1, 10000)
+        self.num_images_spin_box.setValue(101)
+        self.num_images_spin_box.setSingleStep(1)
+        self.num_images_spin_box.setFixedSize(150, 30)
+        frame.layout().addWidget(
+            self.num_images_spin_box, layout_index, 3, QtCore.Qt.AlignmentFlag.AlignRight
+        )
+        layout_index += 1
+        ## line
+        frame.layout().addWidget(Line(), layout_index, 0, 1, -1)
         layout_index += 1
 
-        # generate maps result label animation
-        self.result_label_animation = QtCore.QPropertyAnimation(self, b"text_color", self)
-        self.result_label_animation.setDuration(250)
-        self.result_label_animation.setLoopCount(2)
-        self.result_label_animation.setStartValue(QtGui.QColor(255,255,255))
-        self.result_label_animation.setEndValue(QtGui.QColor(0,0,0))
+        # prev button
+        self.prev_button = QtWidgets.QPushButton("<")
+        self.prev_button.clicked.connect(self.onPrevClicked)
+        self.prev_button.setEnabled(False)
+        frame.layout().addWidget(self.prev_button, layout_index, 0, 1, 1)
+        # path name label
+        self.path_name_label = QtWidgets.QLabel("Path 1")
+        self.path_name_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        frame.layout().addWidget(self.path_name_label, layout_index, 1, 1, 1)
+        # next button
+        self.next_button = QtWidgets.QPushButton(">")
+        self.next_button.clicked.connect(self.onNextClicked)
+        self.next_button.setEnabled(False)
+        frame.layout().addWidget(self.next_button, layout_index, 2, 1, 1)
+        # new path button
+        button = QtWidgets.QPushButton("New Path")
+        button.clicked.connect(self.onNewPathClicked)
+        frame.layout().addWidget(button, layout_index, 3, 1, 1)
+        layout_index += 1
+
+        # add subgoals button
+        button = QtWidgets.QPushButton("Add Subgoals...")
+        button.clicked.connect(self.onAddSubgoalsClicked)
+        frame.layout().addWidget(button, layout_index, 0, 1, -1)
+        layout_index += 1
+        # line
+        frame.layout().addWidget(Line(), layout_index, 0, 1, -1)
+        layout_index += 1
+
+        # save as JSON button
+        button = QtWidgets.QPushButton("Save As JSON...")
+        button.setFixedHeight(50)
+        button.clicked.connect(self.onSaveAsJsonClicked)
+        frame.layout().addWidget(button, layout_index, 0, 1, -1)
+        layout_index += 1
+
+        # add expanding spacer item
+        spacer = QtWidgets.QWidget()
+        spacer.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding
+        )
+        frame.layout().addWidget(spacer, layout_index, 0, -1, -1)
+        layout_index += 1
 
         # right side graphicsview
         self.splitter.addWidget(self.view)
@@ -108,309 +231,169 @@ class PathCreator(QtWidgets.QMainWindow):
         # set splitter sizes
         self.splitter.setSizes([300, 700])
 
-    def handleTypeChanged(self):
-        self.showPreview()
-        self.updateWidgetsFromSelectedType(self.type_dropdown.currentIndex())
+    def onBrowseMapsClicked(self):
+        initial_folder = pathlib.Path.home()
 
-    def getTextColor(self) -> QtGui.QColor:
-        return self.result_label.palette().text().color()
+        sim_setup_path = get_ros_package_path("simulator_setup")
+        if sim_setup_path != "":
+            initial_folder = pathlib.Path(sim_setup_path) / "maps"
 
-    def setTextColor(self, color: QtGui.QColor):
-        palette = self.result_label.palette()
-        palette.setColor(self.result_label.foregroundRole(), color)
-        self.result_label.setPalette(palette)
+        res = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self, caption="Select map.yaml File", directory=str(initial_folder)
+        )
+        path = res[0]
+        if path != "":
+            self.setMap(path)
 
-    # text color property
-    text_color = QtCore.pyqtProperty(QtGui.QColor, getTextColor, setTextColor)
+    def onPrevClicked(self):
+        self.saveCurrentPath()
+        self.clearPath()
+        self.current_path_id -= 1
+        self.setPath(self.current_path_id)
+        self.drawWaypointPath()
 
-    def numberOfMapsChanged(self, value):
-        s = f"Generate {value} maps"
-        self.generate_maps_button.setText(s)
+    def onNextClicked(self):
+        self.saveCurrentPath()
+        self.clearPath()
+        self.current_path_id += 1
+        self.setPath(self.current_path_id)
+        self.drawWaypointPath()
 
-    def getMapNames(self) -> List[str]:
-        '''
-        Generate simple map names that don't exist yet in the form of f"map{index}".
-        Search the maps folder for already existing maps in this format. Get the highest index and then
-        start counting from there.
-        '''
-        folder = pathlib.Path(self.folder_edit.text())
-        map_folders = [p for p in folder.iterdir() if p.is_dir()]
-        names = [p.parts[-1] for p in map_folders]
-        prefix = "map"
-        pat = re.compile(f"{prefix}\d+$", flags=re.ASCII)
-        filtered_names = [name for name in names if pat.match(name) != None]
-        max_index = max([int(name[len(prefix):]) for name in filtered_names])
-        number_of_maps = self.number_of_maps_spin_box.value()
-        return [f"map{i}" for i in range(max_index+1, max_index+1+number_of_maps)]
+    def onNewPathClicked(self):
+        self.saveCurrentPath()
+        self.clearPath()
+        self.num_paths += 1
+        self.current_path_id = self.num_paths
+        self.setPath(self.current_path_id)
 
-    def onGenerateMapsClicked(self):
-        # generate maps
-        height = self.height_spin_box.value()
-        width = self.width_spin_box.value()
-        path = pathlib.Path(self.folder_edit.text())
+    def onAddSubgoalsClicked(self):
+        # toggle addWaypointModeActive
+        if self.addWaypointModeActive:
+            self.setAddWaypointMode(False)
+        else:
+            self.setAddWaypointMode(True)
 
-        # create new maps with appropriate names
-        map_names = self.getMapNames()
-        for map_name in map_names:
-            map_array = self.getCurrentMap()
-            if map_array is not None:
-                self.make_image(map_array, path, map_name)
-                self.create_yaml_files(path / map_name)
+    def onSaveAsJsonClicked(self):
+        self.saveCurrentPath()
+        # write num images to data model
+        self.path_data.num_images = self.num_images_spin_box.value()
 
-        # update result text
-        if len(map_names) > 0:
-            if len(map_names) == 1:
-                self.result_label.setText(f"Generated {len(map_names)} map: {map_names[0]}")
-            elif len(map_names) > 1:
-                self.result_label.setText(f"Generated {len(map_names)} maps: {map_names[0]} - {map_names[-1]}")
+        # get save file name
+        initial_folder = pathlib.Path.home()
+        sim_setup_path = get_ros_package_path("simulator_setup")
+        if sim_setup_path != "":
+            initial_folder = pathlib.Path(sim_setup_path)
+        res = QtWidgets.QFileDialog.getSaveFileName(
+            parent=self, caption="Select map.yaml File", directory=str(initial_folder)
+        )
+        path = res[0]
+        if path != "":
+            self.path_data.saveToFile(path)
 
-            self.result_label_animation.start()
-
-        # display maps in scene
-        ## remove old maps
-        items = self.scene.items()
-        for item in items:
+    def clearPath(self):
+        # reset current path
+        # the data model is not cleared
+        for item in self.subgoal_items:
             self.scene.removeItem(item)
-        ## add new maps
-        offset_hor = 0
-        offset_ver = 0
-        for map_name in map_names:
-            image_path = path / map_name / f"{map_name}.png"
-            pixmap = QtGui.QPixmap(str(image_path))
-            pixmap_item = QtWidgets.QGraphicsPixmapItem(pixmap)
-            pixmap_item.setOffset(offset_hor, offset_ver)
-            self.scene.addItem(pixmap_item)
-            offset_ver += height + 10
-        self.view.fitInView(QtCore.QRectF(-5, -5, width + 5, height + (height / 3)), mode=QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+        self.subgoal_items.clear()
+        self.drawWaypointPath()
 
-    def getCurrentMap(self) -> np.ndarray:
-        map_type = MapType(self.type_dropdown.currentIndex())
-        height = self.height_spin_box.value()
-        width = self.width_spin_box.value()
-        if height < 10 or width < 10:
-            return None
-        map_array = None
-        if map_type == MapType.INDOOR:
-            corridor_radius = self.corridor_width_spin_box.value()
-            iterations = self.iterations_spin_box.value()
-            map_array = self.create_indoor_map(height, width, corridor_radius, iterations)
-        elif map_type == MapType.OUTDOOR:
-            obstacle_number = self.obstacles_spin_box.value()
-            obstacle_extra_radius = self.obstacle_size_spin_box.value()
-            map_array = self.create_outdoor_map(height, width, obstacle_number, obstacle_extra_radius)
+    def saveCurrentPath(self):
+        path = RobotPath()
+        # add robot initial pos
+        path.initial_pos = [
+            self.robot_ellipse_item.scenePos().x(),
+            self.robot_ellipse_item.scenePos().y(),
+        ]
+        # add subgoals
+        path.subgoals = [[item.scenePos().x(), item.scenePos().y()] for item in self.subgoal_items]
+        self.path_data.robot_paths[self.current_path_id] = path
 
-        return map_array
-
-    def getXpmFromNdarray(self, a: np.ndarray) -> List[str]:
-        height, width = a.shape
-        xpm = []
-        xpm.append(f"{width} {height} 2 1")
-        xpm.append("1 c #000000")
-        xpm.append("0 c #FFFFFF")
-        for i in range(height):
-            line = ""
-            for j in range(width):
-                line += str(int(a[i, j]))
-            xpm.append(line)
-        return xpm
-
-    def showPreview(self):
-        '''
-        Generate an example map with the current settings and display it.
-        '''
-        # clear scene
-        items = self.scene.items()
-        for item in items:
-            self.scene.removeItem(item)
-
-        # generate a map
-        map_array = self.getCurrentMap()
-
-        if map_array is None:
-            return
-
-        # add map to the scene
-        ## generate XPM data from array
-        xpm = self.getXpmFromNdarray(map_array)
-        ## get pixmap from XPM data
-        pixmap = QtGui.QPixmap(xpm)
-        pixmap_item = QtWidgets.QGraphicsPixmapItem(pixmap)
-        ## add to scene
-        self.scene.addItem(pixmap_item)
-        ## adjust view
-        height = self.height_spin_box.value()
-        width = self.width_spin_box.value()
-        self.view.fitInView(QtCore.QRectF(-5, -5, width + 5, height + (height / 3)), mode=QtCore.Qt.AspectRatioMode.KeepAspectRatio)
-
-    def onBrowseClicked(self):
-        path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Maps Folder", str(pathlib.Path.home()))
-        if os.path.exists(path):
-            self.folder_edit.setText(path)
-
-    def updateWidgetsFromSelectedType(self, index):
-        map_type = MapType(index)
-        if map_type == MapType.INDOOR:
-            self.corridor_width_label.show()
-            self.corridor_width_spin_box.show()
-            self.iterations_label.show()
-            self.iterations_spin_box.show()
-            self.obstacles_label.hide()
-            self.obstacles_spin_box.hide()
-            self.obstacle_size_label.hide()
-            self.obstacle_size_spin_box.hide()
-        elif map_type == MapType.OUTDOOR:
-            self.corridor_width_label.hide()
-            self.corridor_width_spin_box.hide()
-            self.iterations_label.hide()
-            self.iterations_spin_box.hide()
-            self.obstacles_label.show()
-            self.obstacles_spin_box.show()
-            self.obstacle_size_label.show()
-            self.obstacle_size_spin_box.show()
-
-    def create_yaml_files(self, map_folder_path: pathlib.Path):
-        '''
-        Create the files map.yaml (ROS) and map.wordl.yaml (Flatland) for the map.
-        map_folder_path: path to folder for this map e.g.: /home/user/catkin_ws/src/arena-rosnav/simulator_setup/maps/mymap
-        '''
-        map_folder = pathlib.Path(map_folder_path)
-        map_name = map_folder.parts[-1]
-
-        # create map.yaml
-        map_yaml = {
-            "image": "{0}.png".format(map_name),
-            "resolution": 0.5,
-            "origin": [0.0,0.0,0.0], # [-x,-y,0.0]
-            "negate": 0,
-            "occupied_thresh": 0.65,
-            "free_thresh": 0.196
-        }
-
-        with open(str(map_folder / "map.yaml"), 'w') as outfile:
-            yaml.dump(map_yaml, outfile, sort_keys=False, default_flow_style=None)
-
-        # create map.world.yaml
-        world_yaml_properties = {
-            "properties": {
-                "velocity_iterations": 10,
-                "position_iterations": 10
-            }
-        }
-
-        world_yaml_layers = {
-            "layers": [
-                {
-                    "name": "static",
-                    "map": "map.yaml",
-                    "color": [0, 1, 0, 1]
-                }
-            ]
-        }
-        
-        with open(str(map_folder / "map.world.yaml"), 'w') as outfile:
-            yaml.dump(world_yaml_properties, outfile, sort_keys=False, default_flow_style=False) # somehow the first part must be with default_flow_style=False
-            yaml.dump(world_yaml_layers, outfile, sort_keys=False, default_flow_style=None) # 2nd part must be with default_flow_style=None
-
-    def make_image(self, map: np.ndarray, maps_folder_path: pathlib.Path, map_name: str):
-        '''
-        Create PNG file from occupancy map (1:occupied, 0:free) and the necessary yaml files.
-        - map: numpy array
-        - maps_folder_path: path to maps folder e.g.: /home/user/catkin_ws/src/arena-rosnav/simulator_setup/maps
-        - map_name: name of map, a folder will be created using this name
-        '''
-        # create new directory for map
-        map_folder = maps_folder_path / map_name
-        if not map_folder.exists():
-            os.mkdir(str(map_folder))
-        # create image
-        img = Image.fromarray(((map-1)**2*255).astype('uint8')) # monochromatic image
-        imgrgb = img.convert('RGB')
-        # save image
-        imgrgb.save(str(map_folder / (map_name + ".png"))) # save map in map directory
-
-    def initialize_map(self, height,width,type="indoor"): # create empty map with format given by height,width and initialize empty tree
-        if type == "outdoor":
-            map = np.tile(1,[height,width])
-            map[slice(1,height-1),slice(1,width-1)] = 0
-            return map
+    def setPath(self, path_id: int):
+        # update name label
+        self.path_name_label.setText(f"Path {path_id}")
+        # update enabled state of prev and next buttons
+        if path_id == 1:
+            self.prev_button.setEnabled(False)
         else:
-            return np.tile(1,[height,width])
-
-    def insert_root_node(self, map,tree): # create root node in center of map
-        root_node = [int(np.floor(map.shape[0]/2)),int(np.floor(map.shape[1]/2))]
-        map[root_node[0],root_node[1]] = 0
-        tree.append(root_node)
-
-    def sample(self, map,corridor_radius): # sample position from map within boundary and leave tolerance for corridor width
-        random_x = np.random.choice(range(corridor_radius+2,map.shape[0]-corridor_radius-1,1))
-        random_y = np.random.choice(range(corridor_radius+2,map.shape[1]-corridor_radius-1,1))
-        return [random_x,random_y]
-
-    def find_nearest_node(self, random_position,tree): # find nearest node according to L1 norm
-        nearest_node = []
-        min_distance = np.inf
-        for node in tree:
-            distance = sum(np.abs(np.array(random_position)-np.array(node)))
-            if distance < min_distance:
-                min_distance = distance
-                nearest_node = node
-        return nearest_node
-
-    def insert_new_node(self, random_position,tree,map): # insert new node into the map and tree
-        map[random_position[0],random_position[1]] = 0
-        tree.append(random_position)
-
-    def get_constellation(self, node1,node2):
-        # there are two relevant constellations for the 2 nodes, which must be considered when creating the horizontal and vertical path
-        # 1: lower left and upper right
-        # 2: upper left and lower right
-        # each of the 2 constellation have 2 permutations which must be considered as well    
-        constellation1 = {
-            "permutation1": node1[0]>node2[0] and node1[1]<node2[1], # x1>x2 and y1<y2
-            "permutation2": node1[0]<node2[0] and node1[1]>node2[1]} # x1<x2 and y1>y2
-        if constellation1["permutation1"] or constellation1["permutation2"]:
-            return 1 
+            self.prev_button.setEnabled(True)
+        if path_id == self.num_paths:
+            self.next_button.setEnabled(False)
         else:
-            return 2
+            self.next_button.setEnabled(True)
+        # load path from model
+        if path_id in self.path_data.robot_paths:
+            # set robot pos
+            robot_pos = self.path_data.robot_paths[path_id].initial_pos
+            self.robot_ellipse_item.setPosNoEvent(robot_pos[0], robot_pos[1])
+            # add subgoals
+            for pos in self.path_data.robot_paths[path_id].subgoals:
+                self.addWaypoint(QtCore.QPointF(pos[0], pos[1]))
+        # update scene
+        self.drawWaypointPath()
 
-    def create_path(self, node1,node2,corridor_radius,map):
-        coin_flip = np.random.random()
-        x1,x2 = sorted([node1[0],node2[0]]) # x and y coordinates must be sorted for usage with range function
-        y1,y2 = sorted([node1[1],node2[1]])
-        if self.get_constellation(node1,node2)==1: # check which constellation
-            if coin_flip>=0.5: # randomly determine the curvature of the path (right turn/left turn)
-                map[slice(x1-corridor_radius,x1+corridor_radius+1),range(y1-corridor_radius,y2+1+corridor_radius,1)] = 0 # horizontal path
-                map[range(x1-corridor_radius,x2+1+corridor_radius,1),slice(y1-corridor_radius,y1+corridor_radius+1)] = 0 # vertical path
-            else:
-                map[slice(x2-corridor_radius,x2+corridor_radius+1),range(y1-corridor_radius,y2+1+corridor_radius,1)] = 0 # horizontal path
-                map[range(x1-corridor_radius,x2+1+corridor_radius,1),slice(y2-corridor_radius,y2+corridor_radius+1)] = 0 # vertical path
+    def handleGraphicsViewClick(self, pos: QtCore.QPointF):
+        if self.addWaypointModeActive:
+            self.addWaypoint(pos)
+
+    def addWaypoint(self, pos: QtCore.QPointF = None):
+        item = SubgoalEllipseItem(self, None, None, -0.25, -0.25, 0.5, 0.5)
+        item.setPosNoEvent(pos.x(), pos.y())
+        self.subgoal_items.append(item)
+        self.scene.addItem(item)
+        self.drawWaypointPath()
+
+    def removeWaypoint(self, item: SubgoalEllipseItem):
+        # remove item from scene
+        self.scene.removeItem(item)
+        # remove subgoal from data
+        self.subgoal_items.remove(item)
+        # update path item
+        self.drawWaypointPath()
+
+    def drawWaypointPath(self):
+        path = QtGui.QPainterPath()
+        path.moveTo(self.robot_ellipse_item.scenePos())
+        for item in self.subgoal_items:
+            path.lineTo(item.scenePos())
+
+        self.waypointPathItem.setPath(path)
+
+    def setAddWaypointMode(self, enable: bool):
+        # set the value of addSubgoalModeActive and show/hide a small window depending on the state
+        self.addWaypointModeActive = enable
+        if enable:
+            self.activeModeWindow.show()
         else:
-            if coin_flip>=0.5: # randomly determine the curvature of the path (right turn/left turn)
-                map[slice(x1-corridor_radius,x1+corridor_radius+1),range(y1-corridor_radius,y2+1+corridor_radius,1)] = 0 # horizontal path
-                map[range(x1-corridor_radius,x2+1+corridor_radius,1),slice(y2-corridor_radius,y2+corridor_radius+1)] = 0 # vertical path
-            else:
-                map[slice(x2-corridor_radius,x2+corridor_radius+1),range(y1-corridor_radius,y2+1+corridor_radius,1)] = 0 # horizontal path
-                map[range(x1-corridor_radius,x2+1+corridor_radius,1),slice(y1-corridor_radius,y1+corridor_radius+1)] = 0 # vertical path
+            self.activeModeWindow.hide()
 
-    def create_indoor_map(self, height,width,corridor_radius,iterations):
-        tree = [] # initialize empty tree
-        map = self.initialize_map(height,width)
-        self.insert_root_node(map,tree)
-        for i in range(iterations): # create as many paths/nodes as defined in iteration
-            random_position = self.sample(map,corridor_radius)
-            nearest_node = self.find_nearest_node(random_position,tree) # nearest node must be found before inserting the new node into the tree, else nearest node will be itself
-            self.insert_new_node(random_position,tree,map)
-            self.create_path(random_position,nearest_node,corridor_radius,map)
-        return map
+    def setMap(self, path: str):
+        """
+        Load map from map.yaml file.
+        args:
+            - path: path to map.yaml file
+        """
+        self.map_data = RosMapData(path)
+        self.path_data.map_path = path
+        pixmap = QtGui.QPixmap(self.map_data.image_path)
+        transform = QtGui.QTransform.fromScale(1.0, -1.0)  # flip y axis
+        pixmap = pixmap.transformed(transform)
 
-    def create_outdoor_map(self, height,width,obstacle_number,obstacle_extra_radius):
-        map = self.initialize_map(height,width,type="outdoor")
-        for i in range(obstacle_number):
-            random_position = self.sample(map,obstacle_extra_radius) 
-            map[slice(random_position[0]-obstacle_extra_radius,random_position[0]+obstacle_extra_radius+1), # create 1 pixel obstacles with extra radius if specified
-            slice(random_position[1]-obstacle_extra_radius,random_position[1]+obstacle_extra_radius+1)] = 1
-        return map
+        # remove old map
+        if self.pixmap_item != None:
+            self.scene.removeItem(self.pixmap_item)
 
+        self.pixmap_item = QtWidgets.QGraphicsPixmapItem(pixmap)
+        self.pixmap_item.setZValue(-1.0)  # make sure map is always in the background
+        self.pixmap_item.setScale(self.map_data.resolution)
+        self.pixmap_item.setOffset(
+            self.map_data.origin[0] / self.map_data.resolution,
+            self.map_data.origin[1] / self.map_data.resolution,
+        )
+        self.scene.addItem(self.pixmap_item)
+
+        # update label
+        self.map_name_label.setText(pathlib.Path(path).parts[-2])
 
 
 if __name__ == "__main__":
@@ -420,4 +403,3 @@ if __name__ == "__main__":
     widget.show()
 
     app.exec()
-

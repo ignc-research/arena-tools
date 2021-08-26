@@ -159,7 +159,15 @@ class ArenaGraphicsEllipseItem(QtWidgets.QGraphicsEllipseItem):
     A QGraphicsEllipseItem that is connected to two QDoubleSpinBoxes
     that hold the position of this item.
     '''
-    def __init__(self, xSpinBox: QtWidgets.QDoubleSpinBox = None, ySpinBox: QtWidgets.QDoubleSpinBox = None, *args, **kwargs):
+
+    def __init__(self, xSpinBox: QtWidgets.QDoubleSpinBox = None, ySpinBox: QtWidgets.QDoubleSpinBox = None, *args, handlePositionChangeMethod = None, **kwargs):
+        """
+        args:
+            - xSpinBox: a spin box for the X-coordinate that shall be connected to this item
+            - ySpinBox: a spin box for the Y-coordinate that shall be connected to this item
+            - handlePositionChangeMethod: A method of the parent widget that should be called when this items position changes.
+                It should take a QPointF as argument.
+        """
         super().__init__(*args, **kwargs)
         self.setFlags(
             QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable |
@@ -186,6 +194,8 @@ class ArenaGraphicsEllipseItem(QtWidgets.QGraphicsEllipseItem):
         self.xSpinBox = xSpinBox
         self.ySpinBox = ySpinBox
 
+        self.handlePositionChangeMethod = handlePositionChangeMethod
+
         self.oldItemPos = self.scenePos()
         self.ctrlPressed = False
 
@@ -210,10 +220,12 @@ class ArenaGraphicsEllipseItem(QtWidgets.QGraphicsEllipseItem):
 
     def itemChange(self, change, value):
         if change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemPositionChange:
+            if self.handlePositionChangeMethod != None:
+                self.handlePositionChangeMethod(self.scenePos())
+            self.updateTextItemPos()
             if self.xSpinBox is not None and self.ySpinBox is not None:
                 self.xSpinBox.setValue(self.pos().x())
                 self.ySpinBox.setValue(self.pos().y())
-                self.updateTextItemPos()
 
         return super().itemChange(change, value)
 
@@ -297,6 +309,42 @@ class WaypointGraphicsEllipseItem(ArenaGraphicsEllipseItem):
     def remove(self):
         self.waypointWidget.remove()
 
+
+class SubgoalEllipseItem(ArenaGraphicsEllipseItem):
+    '''
+    This item is meant to visualize a subgoal and is connected to a parent PathCreator.
+    '''
+    def __init__(self, pathCreator, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pathCreator = pathCreator
+
+        # set color
+        brush = QtGui.QBrush(QtGui.QColor("blue"), QtCore.Qt.BrushStyle.SolidPattern)
+        self.setBrush(brush)
+
+        self.keyPressEater = KeyPressEater(self.handleEvent)
+
+    def setPosNoEvent(self, x, y):
+        super().setPosNoEvent(x, y)
+        self.pathCreator.drawWaypointPath()
+
+    def itemChange(self, change, value):
+        if change == QtWidgets.QGraphicsItem.GraphicsItemChange.ItemPositionChange:
+            self.pathCreator.drawWaypointPath()
+
+        return super().itemChange(change, value)
+
+    def handleEvent(self, event):
+        if (event.type() == QtCore.QEvent.Type.KeyRelease
+            and event.key() == QtCore.Qt.Key.Key_Delete
+            and self.isSelected()):
+            self.remove()
+            return True
+
+        return False
+
+    def remove(self):
+        self.pathCreator.removeWaypoint(self)
 
 
 class ArenaQGraphicsPolygonItem(QtWidgets.QGraphicsPolygonItem):
@@ -425,9 +473,9 @@ class ActiveModeWindow(QtWidgets.QMessageBox):
     A Window that pops up to indicate that a special mode has been activated.
     In this case it's the "Add Waypoints Mode".
     '''
-    def __init__(self, pedsimAgentWidget, *args, **kwargs):
+    def __init__(self, connectedWidget, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.pedsimAgentWidget = pedsimAgentWidget
+        self.connectedWidget = connectedWidget
         self.setIcon(QtWidgets.QMessageBox.Icon.Information)
         self.setWindowTitle("Add Waypoints...")
         self.setText("Click anywhere on the map to add a waypoint.\nPress ESC to finish.")
@@ -446,7 +494,7 @@ class ActiveModeWindow(QtWidgets.QMessageBox):
         return super().closeEvent(event)
 
     def disable(self):
-        self.pedsimAgentWidget.addWaypointModeActive = False
+        self.connectedWidget.addWaypointModeActive = False
         self.hide()
 
 
