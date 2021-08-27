@@ -5,9 +5,6 @@ from HelperFunctions import *
 from QtExtensions import *
 from ArenaScenarioEditor import RosMapData
 
-# TODO
-# fix waypoint window not closing on ESC
-
 
 class RobotPath:
     def __init__(self):
@@ -97,6 +94,7 @@ class PathCreator(QtWidgets.QMainWindow):
         # setup waypoints
         self.addWaypointModeActive = False
         self.activeModeWindow = ActiveModeWindow(self)
+        self.activeModeWindow.move(1200, 200)
         self.view.clickedPos.connect(self.handleGraphicsViewClick)
         # GraphicsItem for drawing a path connecting the waypoints
         self.waypointPathItem = QtWidgets.QGraphicsPathItem()
@@ -394,6 +392,18 @@ class PathCreator(QtWidgets.QMainWindow):
 
         # update label
         self.map_name_label.setText(pathlib.Path(path).parts[-2])
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent):
+        if event.key() == QtCore.Qt.Key.Key_Escape or event.key() == QtCore.Qt.Key.Key_Return:
+            self.setAddWaypointMode(False)
+
+        if (
+            event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier
+            and event.key() == QtCore.Qt.Key.Key_D
+        ):
+            self.onAddSubgoalsClicked()
+
+        return super().keyPressEvent(event)
 
 
 if __name__ == "__main__":
