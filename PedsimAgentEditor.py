@@ -9,10 +9,16 @@ from HelperFunctions import *
 class PedsimAgentEditor(QtWidgets.QWidget):
     editorSaved = QtCore.pyqtSignal()
 
-    def __init__(self, pedsimAgentWidget, **kwargs):
+    def __init__(self, pedsimAgentWidget = None, **kwargs):
         super().__init__(**kwargs)
-        self.pedsimAgent = pedsimAgentWidget.pedsimAgent
         self.pedsimAgentWidget = pedsimAgentWidget
+        if pedsimAgentWidget == None:
+            self.pedsimAgent = PedsimAgent()
+            if get_ros_package_path("simulator_setup") != "":
+                path = os.path.join(get_ros_package_path("simulator_setup"), "dynamic_obstacles", "person_two_legged.model.yaml")
+                self.pedsimAgent.loadFlatlandModel(path)
+        else:
+            self.pedsimAgent = pedsimAgentWidget.pedsimAgent
         self.tempFlatlandModel = FlatlandModel()
         self.setup_ui()
         self.updateValuesFromPedsimAgent()
@@ -50,20 +56,21 @@ class PedsimAgentEditor(QtWidgets.QWidget):
 
         # name
         ## label
-        name_label = QtWidgets.QLabel("Name")
-        name_label.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
-        self.scrollAreaFrame.layout().addWidget(name_label, vertical_idx, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
+        self.nameLabel = QtWidgets.QLabel("Name")
+        self.nameLabel.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
+        self.scrollAreaFrame.layout().addWidget(self.nameLabel, vertical_idx, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
         ## editbox
-        self.name_edit = QtWidgets.QLineEdit(self.pedsimAgentWidget.name_label.text())
+        name = self.pedsimAgentWidget.name_label.text() if self.pedsimAgentWidget != None else "global agent"
+        self.name_edit = QtWidgets.QLineEdit(name)
         self.name_edit.setFixedSize(200, 30)
         self.scrollAreaFrame.layout().addWidget(self.name_edit, vertical_idx, 1, QtCore.Qt.AlignmentFlag.AlignRight)
         vertical_idx += 1
 
         # model file
         ## label
-        name_label = QtWidgets.QLabel("Flatland Model")
-        name_label.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
-        self.scrollAreaFrame.layout().addWidget(name_label, vertical_idx, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
+        self.flatlandModelLabel = QtWidgets.QLabel("Flatland Model")
+        self.flatlandModelLabel.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
+        self.scrollAreaFrame.layout().addWidget(self.flatlandModelLabel, vertical_idx, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
         ## choose button
         self.modelButton = QtWidgets.QPushButton("Choose...")
         self.modelButton.setFixedSize(200, 30)
@@ -659,3 +666,19 @@ class PedsimAgentEditor(QtWidgets.QWidget):
                 self.updateValuesFromPedsimAgent()
             elif ret == QtWidgets.QMessageBox.Cancel:
                 event.ignore()
+
+
+class PedsimAgentEditorGlobalConfig(PedsimAgentEditor):
+    """
+    A Pedsim Agent Editor excluding widgets that shouldn't be globally configured
+    and without a parent PedsimAgentWidget.
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def setup_ui(self):
+        super().setup_ui()
+        self.nameLabel.hide()
+        self.name_edit.hide()
+        self.flatlandModelLabel.hide()
+        self.modelButton.hide()
