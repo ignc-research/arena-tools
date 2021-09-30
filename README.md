@@ -10,7 +10,7 @@ A collection of tools to make working with [Arena-Rosnav](https://github.com/ign
 ## Installation
 Install Python packages:
 ```
-pip3 install pyqt5 numpy pyyaml
+pip3 install pyqt5 numpy pyyaml lxml
 ```
 ## Run
 ```
