@@ -3,6 +3,7 @@ A collection of tools to make working with [Arena-Rosnav](https://github.com/ign
 - Scenario Editor
 - Flatland Model Editor
 - Map Generator
+- Map to Gazebo world converter
 
 ## Prerequisites
 - Python 3.6 or higher
@@ -12,6 +13,7 @@ Install Python packages:
 ```
 pip3 install pyqt5 numpy pyyaml lxml scikit-image
 ```
+For converting 2D maps to Gazebo worlds we are using [LIRS_WCT](https://gitlab.com/LIRS_Projects/LIRS-WCT). Please follow their [installation guide](https://gitlab.com/LIRS_Projects/LIRS-WCT#installation) and place the lirs_wct_console executable inside your arena-tools folder to use this functionality.
 ## Run
 ```
 python arena_tools.py
