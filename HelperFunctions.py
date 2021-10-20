@@ -78,3 +78,12 @@ def get_current_user_path(path_in: str) -> str:
     path = Path(path_in)
     new_path = Path.home().joinpath(*path.parts[3:])
     return str(new_path)
+
+def remove_file_ending(file_name: str) -> str:
+    """
+    Remove everything after the first "." in a string.
+    """
+    file_ending_index = file_name.find(".")
+    if file_ending_index != -1:
+        return file_name[:file_ending_index]
+    return file_name

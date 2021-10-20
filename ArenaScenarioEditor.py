@@ -420,7 +420,8 @@ class FlatlandObjectWidget(QtWidgets.QFrame):
         path = res[0]
         if os.path.exists(path):
             # set label to show file name
-            self.browse_button.setText(pathlib.Path(path).parts[-1])
+            name = pathlib.Path(path).parts[-1]
+            self.browse_button.setText(remove_file_ending(name))
             # update flatland object and graphics item
             self.flatlandObject.flatlandModel.load(path)
             self.updateGraphicsPathItemFromFlatlandObject()
@@ -484,7 +485,8 @@ class FlatlandObjectWidget(QtWidgets.QFrame):
         if self.flatlandObject.flatlandModel.path == "":
             self.browse_button.setText("Browse...")
         else:
-            self.browse_button.setText(pathlib.Path(self.flatlandObject.flatlandModel.path).parts[-1])
+            name = pathlib.Path(self.flatlandObject.flatlandModel.path).parts[-1]
+            self.browse_button.setText(remove_file_ending(name))
         # update item scene
         self.updateGraphicsPathItemFromFlatlandObject()
 
