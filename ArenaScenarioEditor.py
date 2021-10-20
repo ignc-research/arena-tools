@@ -5,7 +5,7 @@ import time
 import copy
 from typing import Tuple, List
 from FlatlandBodyEditor import *
-from PedsimAgentEditor import PedsimAgentEditor
+from PedsimAgentEditor import *
 from ArenaScenario import *
 from QtExtensions import *
 from HelperFunctions import *
@@ -628,6 +628,10 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         if path.is_file():
             self.setMap(str(path))
 
+        # create global pedsim settings widget
+        self.pedsimAgentsGlobalConfigWidget = PedsimAgentEditorGlobalConfig()
+        self.pedsimAgentsGlobalConfigWidget.editorSaved.connect(self.onPedsimAgentsGlobalConfigChanged)
+
     def setup_ui(self):
         self.setWindowTitle("Flatland Scenario Editor")
         self.resize(1300, 700)
@@ -651,6 +655,8 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         add_menu.addAction("Set Map...", self.onSetMapClicked)
         add_menu.addAction("Add Pedsim Agent", self.onAddPedsimAgentClicked, "Ctrl+1")
         add_menu.addAction("Add Flatland Object", self.onAddFlatlandObjectClicked, "Ctrl+2")
+        global_pedsim_settings_menu = menubar.addMenu("Global Configs")
+        global_pedsim_settings_menu.addAction("Pedsim Agents...", self.onPedsimAgentsGlobalConfigClicked)
 
         # status bar
         self.statusBar()  # create status bar
@@ -683,6 +689,24 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         # always add robot agent
         self.robotAgentWidget = RobotAgentWidget(self.gscene, self.gview)
         self.obstacles_frame.layout().addWidget(self.robotAgentWidget)
+
+    def onPedsimAgentsGlobalConfigClicked(self):
+        self.pedsimAgentsGlobalConfigWidget.show()
+
+    def onPedsimAgentsGlobalConfigChanged(self):
+        for w in self.getPedsimAgentWidgets():
+            w.save()
+            global_agent = copy.deepcopy(self.pedsimAgentsGlobalConfigWidget.pedsimAgent)
+            # preserve individual values
+            global_agent.name = w.pedsimAgent.name
+            global_agent.flatlandModel = w.pedsimAgent.flatlandModel
+            global_agent.pos = w.pedsimAgent.pos
+            global_agent.waypoints = w.pedsimAgent.waypoints
+            # set new agent
+            w.pedsimAgent = global_agent
+            w.pedsimAgentEditor.pedsimAgent = global_agent
+            w.pedsimAgentEditor.updateValuesFromPedsimAgent()
+            w.handleEditorSaved()
 
     def onSetMapClicked(self):
         initial_folder = os.path.join(get_ros_package_path("simulator_setup"), "maps")

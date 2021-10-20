@@ -180,6 +180,20 @@ class MapGenerator(QtWidgets.QMainWindow):
         frame.layout().addWidget(self.number_of_maps_spin_box, layout_index, 1, QtCore.Qt.AlignmentFlag.AlignRight)
         layout_index += 1
 
+        # resolution
+        ## label
+        resolution_label = QtWidgets.QLabel("### Map Resolution")
+        resolution_label.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
+        frame.layout().addWidget(resolution_label, layout_index, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
+        ## spinbox
+        self.resolution_spin_box = QtWidgets.QDoubleSpinBox()
+        self.resolution_spin_box.setRange(0, 1000)
+        self.resolution_spin_box.setValue(0.5)
+        self.resolution_spin_box.setSingleStep(0.01)
+        self.resolution_spin_box.setFixedSize(150, 30)
+        frame.layout().addWidget(self.resolution_spin_box, layout_index, 1, QtCore.Qt.AlignmentFlag.AlignRight)
+        layout_index += 1
+
         # folder
         folder_label = QtWidgets.QLabel("Save to Folder:")
         frame.layout().addWidget(folder_label, layout_index, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
@@ -248,11 +262,16 @@ class MapGenerator(QtWidgets.QMainWindow):
         folder = pathlib.Path(self.folder_edit.text())
         map_folders = [p for p in folder.iterdir() if p.is_dir()]
         names = [p.parts[-1] for p in map_folders]
+        # get only the names that are in the form of f"map{index}"
         prefix = "map"
         pat = re.compile(f"{prefix}\d+$", flags=re.ASCII)
         filtered_names = [name for name in names if pat.match(name) != None]
-        max_index = max([int(name[len(prefix):]) for name in filtered_names])
+        # get the max index that already exists
+        max_index = 0
+        if len(filtered_names) > 0:
+            max_index = max([int(name[len(prefix):]) for name in filtered_names])
         number_of_maps = self.number_of_maps_spin_box.value()
+        # generate new names beginning with the max index
         return [f"map{i}" for i in range(max_index+1, max_index+1+number_of_maps)]
 
     def onGenerateMapsClicked(self):
@@ -391,7 +410,7 @@ class MapGenerator(QtWidgets.QMainWindow):
         # create map.yaml
         map_yaml = {
             "image": "{0}.png".format(map_name),
-            "resolution": 0.5,
+            "resolution": self.resolution_spin_box.value(),
             "origin": [0.0,0.0,0.0], # [-x,-y,0.0]
             "negate": 0,
             "occupied_thresh": 0.65,
