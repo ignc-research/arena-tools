@@ -1,63 +1,63 @@
 # arena-tools
-A collection of tools to make working with [Arena-Rosnav](https://github.com/ignc-research/arena-rosnav/) easier. It currently includes:
+A collection of tools to make working with [Arena-Rosnav-3D](https://github.com/ignc-research/arena-rosnav-3D/) easier. It currently includes:
 - Scenario Editor
-- Flatland Model Editor
-- Map Generator
-- Map to Gazebo world converter
+- Flatland Model Editor 
+- Map Generator (2D)
+- Map to Gazebo world converter (3D)
 
 ## Prerequisites
 - Python 3.6 or higher
 
 ## Installation
 Install Python packages (preferably in your virtual environment):
-```
+```bash
 pip3 install pyqt5 numpy pyyaml lxml scikit-image Pillow
 pip install PyQt5 --upgrade
 ```
 
 To enable compatibility with arena-rosnav-3d run:
 ```bash
-roscd simulator_setup && cd ../.. && cd forks/arena-tools
+roscd arena-tools
 git clone https://gitlab.com/LIRS_Projects/LIRS-WCT lirs-wct
 cd lirs-wct/deploy.sh
 ```
 <!-- For converting 2D maps to Gazebo worlds we are using [LIRS_WCT](https://gitlab.com/LIRS_Projects/LIRS-WCT). Please follow their [installation guide](https://gitlab.com/LIRS_Projects/LIRS-WCT#installation) and place the lirs_wct_console executable inside your arena-tools folder to use this functionality. -->
-## Run
-```
+# Run
+To start the gui and select your task, run:
+```bash
+roscd arena-tools
 python arena_tools.py
 ```
-# Map Generator
+## Map Generator
+How to create a custom map blueprint like shown here:
 
 
 https://user-images.githubusercontent.com/74921738/130034174-fa6b334b-e220-47ea-91ba-4bc815663ae5.mov
 
 
 
-Map Generator is a tool to generate random ROS maps. Run it using Python:
-```
-python MapGenerator.py
-```
-## Notes
-- Maps can be either an indoor or an outdoor type map. For **indoor** maps you can adjust the **Corridor With** and number of **Iterations**. For **outdoor** maps you can adjust the number of **Obstacles** and the **Obstacle Extra Radius**.
-- Generate maps in bulk by setting **Number of Maps**
-- Each map will be saved in its own folder. Folders will be named like "map[number]". [number] will be incremented starting from the highest number that already exists in the folder, so as not to overwrite any existing maps.
+1. Map Generator is a tool to generate random ROS maps. Firstly select map generator in the *arena-tools* menue. Or run `python MapGenerator.py`
 
-# Converting maps to Gazebo worlds
-After succesfully placing (lirs_wct_console)[https://gitlab.com/LIRS_Projects/LIRS-WCT] executable inside your arena-tools, you can use the Map Generator to convert already generated maps in **simulator_setup/maps** to proper 3D Gazebo worlds.
+> **NOTE:**
+>- Maps can be either an indoor or an outdoor type map. For **indoor** maps you can adjust the **Corridor With** and number of **Iterations**. For **outdoor** maps you can adjust the number of **Obstacles** and the **Obstacle Extra Radius**.
+>- Generate maps in bulk by setting **Number of Maps**
+>- Each map will be saved in its own folder. Folders will be named like "map[number]". [number] will be incremented starting from the highest number that already exists in the folder, so as not to overwrite any existing maps.
+
+2. To convert the 2D maps into 3D Gazebo worlds:
 ![Screenshot from 2021-10-25 23-42-46](https://user-images.githubusercontent.com/41898845/138775328-6609cd98-cf5f-4942-aa3d-bcf9314a5714.png)
-
 Press the button **Convert existing maps into Gazebo worlds** and all of the maps in subfolder map_ will be automatically converted into Gazebo worlds, as well as their respective Pedsim scene obstacles file will be generated and placed under **simulator_setup/scenarios/ped_scenarios/map_{i}.xml**. 
 
 Now all of the maps can be used in Gazebo, have a look at [arena-rosnav-3D](https://github.com/ignc-research/arena-rosnav-3D/blob/main/docs/Usage.md) for more information.
 
-## Notes 
-- For now maps can only be converted in bulk, that is all of the **arena_tools** generated maps found in the setup folder will be converted at once.
-- If you wish to convert a single map or be able to specify the conversion parameters, use textures refer to [LIRS_World_Construction_Tool](https://gitlab.com/LIRS_Projects/LIRS-WCT).
+>**NOTE**
+>- For now maps can only be converted in bulk, that is all of the **arena_tools** generated maps found in the setup folder will be converted at once.
+>- If you wish to convert a single map or be able to specify the conversion parameters, use textures refer to [LIRS_World_Construction_Tool](https://gitlab.com/LIRS_Projects/LIRS-WCT).
 
 # Scenario Editor
 ![](img/scenario_editor.png)
 Scenario Editor is a tool to create scenarios for use in Arena-Rosnav. Run it using Python:
-```
+```bash
+roscd arena-tools
 python ArenaScenarioEditor.py
 ```
 ## Example Usage
@@ -112,7 +112,8 @@ https://user-images.githubusercontent.com/74921738/127176906-98ab58bb-9c40-4d56-
 ![](img/model_editor.png)
 
 Flatland Model Editor is a tool to create models used by Flatland. See the [Flatland Documentation](https://flatland-simulator.readthedocs.io/en/latest/core_functions/models.html) for a description of a model file. Run it using Python:
-```
+```bash
+roscd arena-tools
 python FlatlandModelEditor.py
 ```
 ## Load and Save Models
