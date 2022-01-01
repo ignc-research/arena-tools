@@ -38,18 +38,324 @@ class FlatlandPluginWidget(QtWidgets.QWidget):
         # pedsim movement
         ## agent topic
         ### label
-        label = QtWidgets.QLabel("Agent Topic")
-        self.layout().addWidget(label, layout_idx, 0)
+        self.agent_topic_label = QtWidgets.QLabel("Agent Topic")
+        self.layout().addWidget(self.agent_topic_label, layout_idx, 0)
         ### line edit
-        line_edit = QtWidgets.QLineEdit()
-        self.layout().addWidget(line_edit, layout_idx, 1)
+        self.agent_topic_line_edit = QtWidgets.QLineEdit("/pedsim_simulator/simulated_agents")
+        self.layout().addWidget(self.agent_topic_line_edit, layout_idx, 1)
         layout_idx += 1
+
+        ## base_body_
+        ### label
+        self.base_body_label = QtWidgets.QLabel("Base Body")
+        self.layout().addWidget(self.base_body_label, layout_idx, 0)
+        ### line edit
+        self.base_body_line_edit = QtWidgets.QLineEdit("base")
+        self.layout().addWidget(self.base_body_line_edit, layout_idx, 1)
+        layout_idx += 1
+
+        ## left_leg_body_
+        ### label
+        self.left_leg_body_label = QtWidgets.QLabel("Left Leg Body")
+        self.layout().addWidget(self.left_leg_body_label, layout_idx, 0)
+        ### line edit
+        self.left_leg_body_line_edit = QtWidgets.QLineEdit("left_leg")
+        self.layout().addWidget(self.left_leg_body_line_edit, layout_idx, 1)
+        layout_idx += 1
+
+        ## right_leg_body_
+        ### label
+        self.right_leg_body_label = QtWidgets.QLabel("Right Leg Body")
+        self.layout().addWidget(self.right_leg_body_label, layout_idx, 0)
+        ### line edit
+        self.right_leg_body_line_edit = QtWidgets.QLineEdit("right_leg")
+        self.layout().addWidget(self.right_leg_body_line_edit, layout_idx, 1)
+        layout_idx += 1
+
+        ## update_rate_
+        ### label
+        self.update_rate_label = QtWidgets.QLabel("Update Rate")
+        self.layout().addWidget(self.update_rate_label, layout_idx, 0)
+        ### spin box
+        self.update_rate_spin_box = QtWidgets.QSpinBox()
+        self.update_rate_spin_box.setValue(10)
+        self.layout().addWidget(self.update_rate_spin_box, layout_idx, 1)
+        layout_idx += 1
+
+        ## leg_offset_
+        ### label
+        self.leg_offset_label = QtWidgets.QLabel("Leg Offset")
+        self.layout().addWidget(self.leg_offset_label, layout_idx, 0)
+        ### spin box
+        self.leg_offset_spin_box = QtWidgets.QDoubleSpinBox()
+        self.leg_offset_spin_box.setValue(0.38)
+        self.layout().addWidget(self.leg_offset_spin_box, layout_idx, 1)
+        layout_idx += 1
+
+        ## step_time_
+        ### label
+        self.step_time_label = QtWidgets.QLabel("Step Time (s)")
+        self.layout().addWidget(self.step_time_label, layout_idx, 0)
+        ### spin box
+        self.step_time_spin_box = QtWidgets.QDoubleSpinBox()
+        self.step_time_spin_box.setValue(0.6)
+        self.layout().addWidget(self.step_time_spin_box, layout_idx, 1)
+        layout_idx += 1
+
+        # posepub_
+        ## body
+        ### label
+        self.posepub_label = QtWidgets.QLabel("Body")
+        self.layout().addWidget(self.posepub_label, layout_idx, 0)
+        ### line edit
+        self.posepub_line_edit = QtWidgets.QLineEdit("base")
+        self.layout().addWidget(self.posepub_line_edit, layout_idx, 1)
+        layout_idx += 1
+
+        ## odom_frame_id_
+        ### label
+        self.odom_frame_id_label = QtWidgets.QLabel("Odom Frame ID")
+        self.layout().addWidget(self.odom_frame_id_label, layout_idx, 0)
+        ### line edit
+        self.odom_frame_id_line_edit = QtWidgets.QLineEdit("odom")
+        self.layout().addWidget(self.odom_frame_id_line_edit, layout_idx, 1)
+        layout_idx += 1
+
+        ## odom_pub_
+        ### label
+        self.odom_pub_label = QtWidgets.QLabel("Odom Topic")
+        self.layout().addWidget(self.odom_pub_label, layout_idx, 0)
+        ### line edit
+        self.odom_pub_line_edit = QtWidgets.QLineEdit("odom")
+        self.layout().addWidget(self.odom_pub_line_edit, layout_idx, 1)
+        layout_idx += 1
+
+        ## ground_truth_pub_
+        ### label
+        self.ground_truth_pub_label = QtWidgets.QLabel("Ground Truth Topic")
+        self.layout().addWidget(self.ground_truth_pub_label, layout_idx, 0)
+        ### line edit
+        self.ground_truth_pub_line_edit = QtWidgets.QLineEdit("dynamic_human")
+        self.layout().addWidget(self.ground_truth_pub_line_edit, layout_idx, 1)
+        layout_idx += 1
+
+        ## pub_rate_
+        ### label
+        self.pub_rate_label = QtWidgets.QLabel("Publish Rate")
+        self.layout().addWidget(self.pub_rate_label, layout_idx, 0)
+        ### spin box
+        self.pub_rate_spin_box = QtWidgets.QSpinBox()
+        self.pub_rate_spin_box.setValue(10)
+        self.layout().addWidget(self.pub_rate_spin_box, layout_idx, 1)
+        layout_idx += 1
+
 
     def on_plugin_type_changed(self):
         # show  and hide all relevant widgets
-        if self.plugin_type_combo_box.currentIndex() == FlatlandPluginType.PEDSIMMOVEMENT:
-            pass
-            ...
+        if self.plugin_type_combo_box.currentIndex() == FlatlandPluginType.UNDEFINED.value:
+            # pedsim movement
+            ## agent topic
+            self.agent_topic_label.hide()
+            self.agent_topic_line_edit.hide()
+
+            ## base_body_
+            self.base_body_label.hide()
+            self.base_body_line_edit.hide()
+
+            ## left_leg_body_
+            self.left_leg_body_label.hide()
+            self.left_leg_body_line_edit.hide()
+
+            ## right_leg_body_
+            self.right_leg_body_label.hide()
+            self.right_leg_body_line_edit.hide()
+
+            ## update_rate_
+            self.update_rate_label.hide()
+            self.update_rate_spin_box.hide()
+
+            ## leg_offset_
+            self.leg_offset_label.hide()
+            self.leg_offset_spin_box.hide()
+
+            ## step_time_
+            self.step_time_label.hide()
+            self.step_time_spin_box.hide()
+
+            # posepub_
+            ## body
+            self.posepub_label.hide()
+            self.posepub_line_edit.hide()
+
+            ## odom_frame_id_
+            self.odom_frame_id_label.hide()
+            self.odom_frame_id_line_edit.hide()
+
+            ## odom_pub_
+            self.odom_pub_label.hide()
+            self.odom_pub_line_edit.hide()
+
+            ## ground_truth_pub_
+            self.ground_truth_pub_label.hide()
+            self.ground_truth_pub_line_edit.hide()
+
+            ## pub_rate_
+            self.pub_rate_label.hide()
+            self.pub_rate_spin_box.hide()
+
+        elif self.plugin_type_combo_box.currentIndex() == FlatlandPluginType.PEDSIMMOVEMENT.value:
+            # pedsim movement
+            ## agent topic
+            self.agent_topic_label.show()
+            self.agent_topic_line_edit.show()
+
+            ## base_body_
+            self.base_body_label.show()
+            self.base_body_line_edit.show()
+
+            ## left_leg_body_
+            self.left_leg_body_label.show()
+            self.left_leg_body_line_edit.show()
+
+            ## right_leg_body_
+            self.right_leg_body_label.show()
+            self.right_leg_body_line_edit.show()
+
+            ## update_rate_
+            self.update_rate_label.show()
+            self.update_rate_spin_box.show()
+
+            ## leg_offset_
+            self.leg_offset_label.show()
+            self.leg_offset_spin_box.show()
+
+            ## step_time_
+            self.step_time_label.show()
+            self.step_time_spin_box.show()
+
+            # posepub_
+            ## body
+            self.posepub_label.hide()
+            self.posepub_line_edit.hide()
+
+            ## odom_frame_id_
+            self.odom_frame_id_label.hide()
+            self.odom_frame_id_line_edit.hide()
+
+            ## odom_pub_
+            self.odom_pub_label.hide()
+            self.odom_pub_line_edit.hide()
+
+            ## ground_truth_pub_
+            self.ground_truth_pub_label.hide()
+            self.ground_truth_pub_line_edit.hide()
+
+            ## pub_rate_
+            self.pub_rate_label.hide()
+            self.pub_rate_spin_box.hide()
+
+        elif self.plugin_type_combo_box.currentIndex() == FlatlandPluginType.VEHICLEMOVEMENT.value:
+            # pedsim movement
+            ## agent topic
+            self.agent_topic_label.show()
+            self.agent_topic_line_edit.show()
+
+            ## base_body_
+            self.base_body_label.show()
+            self.base_body_line_edit.show()
+
+            ## left_leg_body_
+            self.left_leg_body_label.show()
+            self.left_leg_body_line_edit.show()
+
+            ## right_leg_body_
+            self.right_leg_body_label.show()
+            self.right_leg_body_line_edit.show()
+
+            ## update_rate_
+            self.update_rate_label.show()
+            self.update_rate_spin_box.show()
+
+            ## leg_offset_
+            self.leg_offset_label.show()
+            self.leg_offset_spin_box.show()
+
+            ## step_time_
+            self.step_time_label.show()
+            self.step_time_spin_box.show()
+
+            # posepub_
+            ## body
+            self.posepub_label.hide()
+            self.posepub_line_edit.hide()
+
+            ## odom_frame_id_
+            self.odom_frame_id_label.hide()
+            self.odom_frame_id_line_edit.hide()
+
+            ## odom_pub_
+            self.odom_pub_label.hide()
+            self.odom_pub_line_edit.hide()
+
+            ## ground_truth_pub_
+            self.ground_truth_pub_label.hide()
+            self.ground_truth_pub_line_edit.hide()
+
+            ## pub_rate_
+            self.pub_rate_label.hide()
+            self.pub_rate_spin_box.hide()
+
+        elif self.plugin_type_combo_box.currentIndex() == FlatlandPluginType.POSEPUB.value:
+            # pedsim movement
+            ## agent topic
+            self.agent_topic_label.hide()
+            self.agent_topic_line_edit.hide()
+
+            ## base_body_
+            self.base_body_label.hide()
+            self.base_body_line_edit.hide()
+
+            ## left_leg_body_
+            self.left_leg_body_label.hide()
+            self.left_leg_body_line_edit.hide()
+
+            ## right_leg_body_
+            self.right_leg_body_label.hide()
+            self.right_leg_body_line_edit.hide()
+
+            ## update_rate_
+            self.update_rate_label.hide()
+            self.update_rate_spin_box.hide()
+
+            ## leg_offset_
+            self.leg_offset_label.hide()
+            self.leg_offset_spin_box.hide()
+
+            ## step_time_
+            self.step_time_label.hide()
+            self.step_time_spin_box.hide()
+
+            # posepub_
+            ## body
+            self.posepub_label.show()
+            self.posepub_line_edit.show()
+
+            ## odom_frame_id_
+            self.odom_frame_id_label.show()
+            self.odom_frame_id_line_edit.show()
+
+            ## odom_pub_
+            self.odom_pub_label.show()
+            self.odom_pub_line_edit.show()
+
+            ## ground_truth_pub_
+            self.ground_truth_pub_label.show()
+            self.ground_truth_pub_line_edit.show()
+
+            ## pub_rate_
+            self.pub_rate_label.show()
+            self.pub_rate_spin_box.show()
+
 
 
 class FlatlandBodyWidget(QtWidgets.QWidget):
@@ -180,18 +486,18 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
         frame = QtWidgets.QFrame()
         frame.setLayout(QtWidgets.QGridLayout())
 
-        # add title
+        # title
         label = QtWidgets.QLabel("## Plugins")
         label.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
         frame.layout().addWidget(label, 0, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
 
-        # add button
+        # button
         self.button = QtWidgets.QPushButton("Add Plugin")
         self.button.setFixedSize(200, 30)
         self.button.clicked.connect(self.on_add_plugin_button_clicked)
         frame.layout().addWidget(self.button, 0, 1, QtCore.Qt.AlignmentFlag.AlignRight)
 
-        # add body list
+        # plugin list
         self.plugins_list_frame = QtWidgets.QFrame()
         self.plugins_list_frame.setLayout(QtWidgets.QVBoxLayout())
         frame.layout().addWidget(self.plugins_list_frame, 1, 0, 1, -1)
@@ -201,6 +507,7 @@ class FlatlandModelEditor(QtWidgets.QMainWindow):
 
     def on_add_plugin_button_clicked(self):
         w = FlatlandPluginWidget(self.plugin_id, self.model, parent=self)
+        w.on_plugin_type_changed()
         return self.add_flatland_plugin_widget(w)
 
     def add_flatland_plugin_widget(self, w: FlatlandPluginWidget):
@@ -324,6 +631,7 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication([])
 
     widget = FlatlandModelEditor()
+    widget.on_add_plugin_button_clicked()
     widget.show()
 
     app.exec()
