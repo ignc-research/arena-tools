@@ -9,11 +9,19 @@ A collection of tools to make working with [Arena-Rosnav](https://github.com/ign
 - Python 3.6 or higher
 
 ## Installation
-Install Python packages:
+Install Python packages (preferably in your virtual environment):
 ```
-pip3 install pyqt5 numpy pyyaml lxml scikit-image
+pip3 install pyqt5 numpy pyyaml lxml scikit-image Pillow
+pip install PyQt5 --upgrade
 ```
-For converting 2D maps to Gazebo worlds we are using [LIRS_WCT](https://gitlab.com/LIRS_Projects/LIRS-WCT). Please follow their [installation guide](https://gitlab.com/LIRS_Projects/LIRS-WCT#installation) and place the lirs_wct_console executable inside your arena-tools folder to use this functionality.
+
+To enable compatibility with arena-rosnav-3d run:
+```bash
+roscd simulator_setup && cd ../.. && cd forks/arena-tools
+git clone https://gitlab.com/LIRS_Projects/LIRS-WCT lirs-wct
+cd lirs-wct/deploy.sh
+```
+<!-- For converting 2D maps to Gazebo worlds we are using [LIRS_WCT](https://gitlab.com/LIRS_Projects/LIRS-WCT). Please follow their [installation guide](https://gitlab.com/LIRS_Projects/LIRS-WCT#installation) and place the lirs_wct_console executable inside your arena-tools folder to use this functionality. -->
 ## Run
 ```
 python arena_tools.py
@@ -35,7 +43,7 @@ python MapGenerator.py
 - Each map will be saved in its own folder. Folders will be named like "map[number]". [number] will be incremented starting from the highest number that already exists in the folder, so as not to overwrite any existing maps.
 
 # Converting maps to Gazebo worlds
-After succesfully placing lirs_wct_console[https://gitlab.com/LIRS_Projects/LIRS-WCT] executable inside your arena-tools, you can use the Map Generator to convert already generated maps in **simulator_setup/maps** to proper 3D Gazebo worlds.
+After succesfully placing (lirs_wct_console)[https://gitlab.com/LIRS_Projects/LIRS-WCT] executable inside your arena-tools, you can use the Map Generator to convert already generated maps in **simulator_setup/maps** to proper 3D Gazebo worlds.
 ![Screenshot from 2021-10-25 23-42-46](https://user-images.githubusercontent.com/41898845/138775328-6609cd98-cf5f-4942-aa3d-bcf9314a5714.png)
 
 Press the button **Convert existing maps into Gazebo worlds** and all of the maps in subfolder map_ will be automatically converted into Gazebo worlds, as well as their respective Pedsim scene obstacles file will be generated and placed under **simulator_setup/scenarios/ped_scenarios/map_{i}.xml**. 
