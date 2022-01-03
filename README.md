@@ -49,7 +49,7 @@ https://user-images.githubusercontent.com/74921738/130034174-fa6b334b-e220-47ea-
 ![Screenshot from 2021-10-25 23-42-46](https://user-images.githubusercontent.com/41898845/138775328-6609cd98-cf5f-4942-aa3d-bcf9314a5714.png)
 Press the button **Convert existing maps into Gazebo worlds** and all of the maps in subfolder map_ will be automatically converted into Gazebo worlds, as well as their respective Pedsim scene obstacles file will be generated and placed under **simulator_setup/scenarios/ped_scenarios/map_{i}.xml**. 
 \
-When you see an output as in the following in your terminal, the worlds have been successfully converted to gazebo maps and you can close the map-generator interface. 
+When you see an output like the following in your terminal, the worlds have been successfully converted to Gazebo maps and you can close the map generator interface. 
     ```txt
     Loaded map in /home/usr/catkin_ws/src/arena-rosnav-3D/simulator_setup/maps/map4/map.yaml with metadata:
     {'image': 'map4.png', 'resolution': 0.5, 'origin': [0.0, 0.0, 0.0], 'negate': 0, 'occupied_thresh': 0.65, 'free_thresh': 0.196}
