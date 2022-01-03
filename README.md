@@ -11,7 +11,7 @@ A collection of tools to make working with [Arena-Rosnav-3D](https://github.com/
 ## Installation
 Install Python packages (preferably in your virtual environment):
 ```bash
-pip3 install pyqt5 numpy pyyaml lxml scikit-image Pillow
+pip3 install pyqt5 numpy pyyaml lxml scikit-image Pillow scikit-image
 pip install PyQt5 --upgrade
 ```
 
@@ -20,6 +20,8 @@ To enable compatibility with arena-rosnav-3d run:
 roscd arena-tools
 git clone https://gitlab.com/LIRS_Projects/LIRS-WCT lirs-wct
 cd lirs-wct/deploy.sh
+roscd arena-tools
+mv lirs-wct/lirs_wct_console/build/lirs_wct_console .
 ```
 <!-- For converting 2D maps to Gazebo worlds we are using [LIRS_WCT](https://gitlab.com/LIRS_Projects/LIRS-WCT). Please follow their [installation guide](https://gitlab.com/LIRS_Projects/LIRS-WCT#installation) and place the lirs_wct_console executable inside your arena-tools folder to use this functionality. -->
 # Run
@@ -46,7 +48,15 @@ https://user-images.githubusercontent.com/74921738/130034174-fa6b334b-e220-47ea-
 2. To convert the 2D maps into 3D Gazebo worlds:
 ![Screenshot from 2021-10-25 23-42-46](https://user-images.githubusercontent.com/41898845/138775328-6609cd98-cf5f-4942-aa3d-bcf9314a5714.png)
 Press the button **Convert existing maps into Gazebo worlds** and all of the maps in subfolder map_ will be automatically converted into Gazebo worlds, as well as their respective Pedsim scene obstacles file will be generated and placed under **simulator_setup/scenarios/ped_scenarios/map_{i}.xml**. 
-
+\
+When you see an output as in the following in your terminal, the worlds have been successfully converted to gazebo maps and you can close the map-generator interface. 
+    ```txt
+    Loaded map in /home/usr/catkin_ws/src/arena-rosnav-3D/simulator_setup/maps/map4/map.yaml with metadata:
+    {'image': 'map4.png', 'resolution': 0.5, 'origin': [0.0, 0.0, 0.0], 'negate': 0, 'occupied_thresh': 0.65, 'free_thresh': 0.196}
+    Lossy conversion from int64 to uint8. Range [0, 255]. Convert image to uint8 prior to saving to suppress this warning.
+    Writing scene in /home/usr/catkin_ws/src/arena-rosnav-3D/simulator_setup/scenarios/ped_scenarios/map4.xml...
+    Done.
+    ```
 Now all of the maps can be used in Gazebo, have a look at [arena-rosnav-3D](https://github.com/ignc-research/arena-rosnav-3D/blob/main/docs/Usage.md) for more information.
 
 >**NOTE**
@@ -79,7 +89,7 @@ https://user-images.githubusercontent.com/74921738/127912004-4e97af74-b6b8-4501-
 Click on File->Open or File->Save. Scenarios can be saved in YAML or JSON format, just use the according file ending.
 
 ## Set Scenario Map
-Click on Elements->Set Map. Select a map.yaml file in the format of a typical ROS map (see [map_server Docs](http://wiki.ros.org/map_server#YAML_format)). The map will be loaded into the scene.
+Click on Elements->Set Map. Select a `map.yaml` file in the format of a typical ROS map (see [map_server Docs](http://wiki.ros.org/map_server#YAML_format)). The map will be loaded into the scene.
 
 ## Set Robot initial position and goal
 Robot position and goal is always part of a scenario.

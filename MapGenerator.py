@@ -340,7 +340,7 @@ class MapGenerator(QtWidgets.QMainWindow):
             os.makedirs(out_path, exist_ok=True)
             # Calling the converter executable
             subprocess.call(
-                f"./lirs_wct/lirs_wct_console/build/lirs_wct_console -i {map_png} -o {map_names} -f {out_path} -c -l {scale} -z 0.02", shell=True)
+                f"./lirs_wct_console -i {map_png} -o {map_names} -f {out_path} -c -l {scale} -z 0.02", shell=True)
 
             # Changing resulting name to our convention
             if os.path.isfile(out_path + map_names + '.world'):
