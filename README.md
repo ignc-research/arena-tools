@@ -19,7 +19,8 @@ To enable compatibility with arena-rosnav-3d run:
 ```bash
 roscd arena-tools
 git clone https://gitlab.com/LIRS_Projects/LIRS-WCT lirs-wct
-cd lirs-wct/deploy.sh
+cd lirs-wct
+./deploy.sh
 roscd arena-tools
 mv lirs-wct/lirs_wct_console/build/lirs_wct_console .
 ```
