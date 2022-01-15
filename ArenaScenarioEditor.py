@@ -10,7 +10,8 @@ from ArenaScenario import *
 from QtExtensions import *
 from HelperFunctions import *
 
-class RosMapData():
+
+class RosMapData:
     def __init__(self, path: str = ""):
         self.image_path = ""
         self.resolution = 1.0
@@ -30,14 +31,21 @@ class RosMapData():
                 self.origin = [float(value) for value in data["origin"]]
 
 
-
 class WaypointWidget(QtWidgets.QWidget):
-    def __init__(self, pedsimAgentWidget, graphicsScene: QtWidgets.QGraphicsScene, posIn: QtCore.QPointF = None, **kwargs):
+    def __init__(
+        self,
+        pedsimAgentWidget,
+        graphicsScene: QtWidgets.QGraphicsScene,
+        posIn: QtCore.QPointF = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.id = 0
         self.pedsimAgentWidget = pedsimAgentWidget  # needed so the ellipse item can trigger a waypoint path redraw
         # create circle and add to scene
-        self.ellipseItem = WaypointGraphicsEllipseItem(self, None, None, -0.25, -0.25, 0.5, 0.5)
+        self.ellipseItem = WaypointGraphicsEllipseItem(
+            self, None, None, -0.25, -0.25, 0.5, 0.5
+        )
         self.graphicsScene = graphicsScene
         graphicsScene.addItem(self.ellipseItem)
         # setup widgets
@@ -49,7 +57,9 @@ class WaypointWidget(QtWidgets.QWidget):
 
     def setupUI(self):
         self.setLayout(QtWidgets.QHBoxLayout())
-        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum
+        )
 
         # x value
         ## label
@@ -89,10 +99,14 @@ class WaypointWidget(QtWidgets.QWidget):
         return self.posXSpinBox.value(), self.posYSpinBox.value()
 
     def updateEllipseItemFromSpinBoxes(self):
-        if not self.ellipseItem.isDragged:  # do this to prevent recursion between spin boxes and graphics item
+        if (
+            not self.ellipseItem.isDragged
+        ):  # do this to prevent recursion between spin boxes and graphics item
             x = self.posXSpinBox.value()
             y = self.posYSpinBox.value()
-            self.ellipseItem.setPosNoEvent(x, y)  # set without event to prevent recursion between spin boxes and graphics item
+            self.ellipseItem.setPosNoEvent(
+                x, y
+            )  # set without event to prevent recursion between spin boxes and graphics item
 
     def updateSpinBoxesFromGraphicsItem(self):
         new_pos = self.ellipseItem.mapToScene(self.ellipseItem.transformOriginPoint())
@@ -109,12 +123,19 @@ class WaypointWidget(QtWidgets.QWidget):
         self.deleteLater()
 
 
-
 class PedsimAgentWidget(QtWidgets.QFrame):
-    '''
+    """
     This is a row in the obstacles frame.
-    '''
-    def __init__(self, id: int, pedsimAgentIn: PedsimAgent, graphicsScene: QtWidgets.QGraphicsScene, graphicsView: ArenaQGraphicsView, **kwargs):
+    """
+
+    def __init__(
+        self,
+        id: int,
+        pedsimAgentIn: PedsimAgent,
+        graphicsScene: QtWidgets.QGraphicsScene,
+        graphicsView: ArenaQGraphicsView,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.id = id
         self.graphicsScene = graphicsScene
@@ -128,7 +149,9 @@ class PedsimAgentWidget(QtWidgets.QFrame):
         # setup widgets
         self.setup_ui()
         # setup pedsim agent editor
-        self.pedsimAgentEditor = PedsimAgentEditor(self, parent=self.parent(), flags=QtCore.Qt.WindowType.Window)
+        self.pedsimAgentEditor = PedsimAgentEditor(
+            self, parent=self.parent(), flags=QtCore.Qt.WindowType.Window
+        )
         self.pedsimAgentEditor.editorSaved.connect(self.handleEditorSaved)
 
         # setup waypoints
@@ -223,12 +246,16 @@ class PedsimAgentWidget(QtWidgets.QFrame):
         return widgets
 
     def updateSpinBoxesFromGraphicsItem(self):
-        new_pos = self.graphicsPathItem.mapToScene(self.graphicsPathItem.transformOriginPoint())
+        new_pos = self.graphicsPathItem.mapToScene(
+            self.graphicsPathItem.transformOriginPoint()
+        )
         self.posXSpinBox.setValue(new_pos.x())
         self.posYSpinBox.setValue(new_pos.y())
 
     def updateGraphicsPathItemFromSpinBoxes(self):
-        if not self.graphicsPathItem.isDragged:  # prevents recursive loop (spin box <-> moving item)
+        if (
+            not self.graphicsPathItem.isDragged
+        ):  # prevents recursive loop (spin box <-> moving item)
             x = self.posXSpinBox.value()
             y = self.posYSpinBox.value()
             self.graphicsPathItem.setPosNoEvent(x, y)
@@ -254,7 +281,12 @@ class PedsimAgentWidget(QtWidgets.QFrame):
                     radius = footprint.radius
                     painter_path.addEllipse(center, radius, radius)
                 if isinstance(footprint, PolygonFlatlandFootprint):
-                    polygon = QtGui.QPolygonF([QtCore.QPointF(point[0], point[1]) for point in footprint.points])
+                    polygon = QtGui.QPolygonF(
+                        [
+                            QtCore.QPointF(point[0], point[1])
+                            for point in footprint.points
+                        ]
+                    )
                     painter_path.addPolygon(polygon)
         self.graphicsPathItem.setPath(painter_path)
         # update text
@@ -357,12 +389,19 @@ class PedsimAgentWidget(QtWidgets.QFrame):
         self.remove()
 
 
-
 class FlatlandObjectWidget(QtWidgets.QFrame):
-    '''
+    """
     This is a row in the obstacles frame.
-    '''
-    def __init__(self, id: int, flatlandObjectIn: FlatlandObject, graphicsScene: QtWidgets.QGraphicsScene, graphicsView: ArenaQGraphicsView, **kwargs):
+    """
+
+    def __init__(
+        self,
+        id: int,
+        flatlandObjectIn: FlatlandObject,
+        graphicsScene: QtWidgets.QGraphicsScene,
+        graphicsView: ArenaQGraphicsView,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.id = id
         self.graphicsScene = graphicsScene
@@ -411,12 +450,13 @@ class FlatlandObjectWidget(QtWidgets.QFrame):
         self.browse_button.clicked.connect(self.onBrowseClicked)
         self.layout().addWidget(self.browse_button, 2, 1, 1, -1)
 
-
     def onBrowseClicked(self):
         default_folder = get_ros_package_path("simulator_setup")
         if default_folder != "":
             default_folder = os.path.join(default_folder, "obstacles")
-        res = QtWidgets.QFileDialog.getOpenFileName(self, "Select Flatland Model File", default_folder)
+        res = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Select Flatland Model File", default_folder
+        )
         path = res[0]
         if os.path.exists(path):
             # set label to show file name
@@ -435,12 +475,16 @@ class FlatlandObjectWidget(QtWidgets.QFrame):
         self.updateSpinBoxesFromGraphicsItem()
 
     def updateSpinBoxesFromGraphicsItem(self):
-        new_pos = self.graphicsPathItem.mapToScene(self.graphicsPathItem.transformOriginPoint())
+        new_pos = self.graphicsPathItem.mapToScene(
+            self.graphicsPathItem.transformOriginPoint()
+        )
         self.posXSpinBox.setValue(new_pos.x())
         self.posYSpinBox.setValue(new_pos.y())
 
     def updateGraphicsPathItemFromSpinBoxes(self):
-        if not self.graphicsPathItem.isDragged:  # prevents recursive loop (spin box <-> moving item)
+        if (
+            not self.graphicsPathItem.isDragged
+        ):  # prevents recursive loop (spin box <-> moving item)
             x = self.posXSpinBox.value()
             y = self.posYSpinBox.value()
             self.graphicsPathItem.setPosNoEvent(x, y)
@@ -465,7 +509,12 @@ class FlatlandObjectWidget(QtWidgets.QFrame):
                     radius = footprint.radius
                     painter_path.addEllipse(center, radius, radius)
                 if isinstance(footprint, PolygonFlatlandFootprint):
-                    polygon = QtGui.QPolygonF([QtCore.QPointF(point[0], point[1]) for point in footprint.points])
+                    polygon = QtGui.QPolygonF(
+                        [
+                            QtCore.QPointF(point[0], point[1])
+                            for point in footprint.points
+                        ]
+                    )
                     painter_path.addPolygon(polygon)
         self.graphicsPathItem.setPath(painter_path)
         # update rotation
@@ -519,12 +568,17 @@ class FlatlandObjectWidget(QtWidgets.QFrame):
         self.remove()
 
 
-
 class RobotAgentWidget(QtWidgets.QFrame):
-    '''
+    """
     This is a row in the obstacles frame.
-    '''
-    def __init__(self, graphicsScene: QtWidgets.QGraphicsScene, graphicsView: ArenaQGraphicsView, **kwargs):
+    """
+
+    def __init__(
+        self,
+        graphicsScene: QtWidgets.QGraphicsScene,
+        graphicsView: ArenaQGraphicsView,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.graphicsScene = graphicsScene
         self.graphicsView = graphicsView
@@ -533,7 +587,9 @@ class RobotAgentWidget(QtWidgets.QFrame):
 
         # create graphics items displayed in the scene
         ## start pos
-        self.startGraphicsEllipseItem = ArenaGraphicsEllipseItem(self.startXSpinBox, self.startYSpinBox, -0.25, -0.25, 0.5, 0.5)
+        self.startGraphicsEllipseItem = ArenaGraphicsEllipseItem(
+            self.startXSpinBox, self.startYSpinBox, -0.25, -0.25, 0.5, 0.5
+        )
         # set color
         brush = QtGui.QBrush(QtGui.QColor("green"), QtCore.Qt.BrushStyle.SolidPattern)
         self.startGraphicsEllipseItem.setBrush(brush)
@@ -543,7 +599,9 @@ class RobotAgentWidget(QtWidgets.QFrame):
         self.graphicsScene.addItem(self.startGraphicsEllipseItem)
 
         ## goal pos
-        self.goalGraphicsEllipseItem = ArenaGraphicsEllipseItem(self.goalXSpinBox, self.goalYSpinBox, -0.25, -0.25, 0.5, 0.5)
+        self.goalGraphicsEllipseItem = ArenaGraphicsEllipseItem(
+            self.goalXSpinBox, self.goalYSpinBox, -0.25, -0.25, 0.5, 0.5
+        )
         # set color
         brush = QtGui.QBrush(QtGui.QColor("red"), QtCore.Qt.BrushStyle.SolidPattern)
         self.goalGraphicsEllipseItem.setBrush(brush)
@@ -557,7 +615,7 @@ class RobotAgentWidget(QtWidgets.QFrame):
         self.startYSpinBox.setValue(3)
         self.goalXSpinBox.setValue(3)
         self.goalYSpinBox.setValue(-3)
-        
+
     def setup_ui(self):
         self.setLayout(QtWidgets.QGridLayout())
         self.setFrameStyle(QtWidgets.QFrame.Shape.Box | QtWidgets.QFrame.Shadow.Raised)
@@ -587,19 +645,31 @@ class RobotAgentWidget(QtWidgets.QFrame):
         self.goalYSpinBox.valueChanged.connect(self.updateGraphicsItemsFromSpinBoxes)
         self.layout().addWidget(self.goalYSpinBox, 2, 2)
 
+        self.resetsSpinBox = QtWidgets.QSpinBox()
+        self.resetsSpinBox.setMinimum(0)
+        rst_label = QtWidgets.QLabel("Episode resets:")
+        self.layout().addWidget(rst_label, 3, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
+        self.layout().addWidget(self.resetsSpinBox, 3, 1)
+
     def updateSpinBoxesFromGraphicsItems(self):
         # start
-        new_pos = self.startGraphicsEllipseItem.mapToScene(self.startGraphicsEllipseItem.transformOriginPoint())
+        new_pos = self.startGraphicsEllipseItem.mapToScene(
+            self.startGraphicsEllipseItem.transformOriginPoint()
+        )
         self.startXSpinBox.setValue(new_pos.x())
         self.startYSpinBox.setValue(new_pos.y())
         # goal
-        new_pos = self.goalGraphicsEllipseItem.mapToScene(self.goalGraphicsEllipseItem.transformOriginPoint())
+        new_pos = self.goalGraphicsEllipseItem.mapToScene(
+            self.goalGraphicsEllipseItem.transformOriginPoint()
+        )
         self.goalXSpinBox.setValue(new_pos.x())
         self.goalYSpinBox.setValue(new_pos.y())
 
     def updateGraphicsItemsFromSpinBoxes(self):
         # start
-        if not self.startGraphicsEllipseItem.isDragged:  # prevents recursive loop (spin box <-> moving item)
+        if (
+            not self.startGraphicsEllipseItem.isDragged
+        ):  # prevents recursive loop (spin box <-> moving item)
             x = self.startXSpinBox.value()
             y = self.startYSpinBox.value()
             self.startGraphicsEllipseItem.setPosNoEvent(x, y)
@@ -608,7 +678,6 @@ class RobotAgentWidget(QtWidgets.QFrame):
             x = self.goalXSpinBox.value()
             y = self.goalYSpinBox.value()
             self.goalGraphicsEllipseItem.setPosNoEvent(x, y)
-
 
 
 class ArenaScenarioEditor(QtWidgets.QMainWindow):
@@ -624,20 +693,27 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         self.lastNameId = 0
 
         # set default map to empty map if it exists
-        path = pathlib.Path(get_ros_package_path("simulator_setup")) / "maps" / "map_empty" / "map.yaml"
+        path = (
+            pathlib.Path(get_ros_package_path("simulator_setup"))
+            / "maps"
+            / "map_empty"
+            / "map.yaml"
+        )
         if path.is_file():
             self.setMap(str(path))
 
         # create global pedsim settings widget
         self.pedsimAgentsGlobalConfigWidget = PedsimAgentEditorGlobalConfig()
-        self.pedsimAgentsGlobalConfigWidget.editorSaved.connect(self.onPedsimAgentsGlobalConfigChanged)
+        self.pedsimAgentsGlobalConfigWidget.editorSaved.connect(
+            self.onPedsimAgentsGlobalConfigChanged
+        )
 
     def setup_ui(self):
         self.setWindowTitle("Flatland Scenario Editor")
         self.resize(1300, 700)
         self.move(100, 100)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap('icon.png'), QtGui.QIcon.Selected, QtGui.QIcon.On)
+        icon.addPixmap(QtGui.QPixmap("icon.png"), QtGui.QIcon.Selected, QtGui.QIcon.On)
         self.setWindowIcon(icon)
 
         # set central widget
@@ -654,18 +730,24 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         add_menu = menubar.addMenu("Elements")
         add_menu.addAction("Set Map...", self.onSetMapClicked)
         add_menu.addAction("Add Pedsim Agent", self.onAddPedsimAgentClicked, "Ctrl+1")
-        add_menu.addAction("Add Flatland Object", self.onAddFlatlandObjectClicked, "Ctrl+2")
+        add_menu.addAction(
+            "Add Flatland Object", self.onAddFlatlandObjectClicked, "Ctrl+2"
+        )
         global_pedsim_settings_menu = menubar.addMenu("Global Configs")
-        global_pedsim_settings_menu.addAction("Pedsim Agents...", self.onPedsimAgentsGlobalConfigClicked)
+        global_pedsim_settings_menu.addAction(
+            "Pedsim Agents...", self.onPedsimAgentsGlobalConfigClicked
+        )
 
         # status bar
         self.statusBar()  # create status bar
-        
+
         # drawing frame
         ## frame
         drawing_frame = QtWidgets.QFrame()
         drawing_frame.setLayout(QtWidgets.QVBoxLayout())
-        drawing_frame.setFrameStyle(QtWidgets.QFrame.Shape.Box | QtWidgets.QFrame.Shadow.Raised)
+        drawing_frame.setFrameStyle(
+            QtWidgets.QFrame.Shape.Box | QtWidgets.QFrame.Shadow.Raised
+        )
         self.centralWidget().layout().addWidget(drawing_frame, 0, 1, -1, -1)
         ## graphicsscene
         self.gscene = ArenaQGraphicsScene()
@@ -683,7 +765,9 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         ## frame
         self.obstacles_frame = QtWidgets.QFrame()
         self.obstacles_frame.setLayout(QtWidgets.QVBoxLayout())
-        self.obstacles_frame.setSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
+        self.obstacles_frame.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum
+        )
         self.obstacles_scrollarea.setWidget(self.obstacles_frame)
 
         # always add robot agent
@@ -696,7 +780,9 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
     def onPedsimAgentsGlobalConfigChanged(self):
         for w in self.getPedsimAgentWidgets():
             w.save()
-            global_agent = copy.deepcopy(self.pedsimAgentsGlobalConfigWidget.pedsimAgent)
+            global_agent = copy.deepcopy(
+                self.pedsimAgentsGlobalConfigWidget.pedsimAgent
+            )
             # preserve individual values
             global_agent.name = w.pedsimAgent.name
             global_agent.flatlandModel = w.pedsimAgent.flatlandModel
@@ -710,7 +796,9 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
 
     def onSetMapClicked(self):
         initial_folder = os.path.join(get_ros_package_path("simulator_setup"), "maps")
-        res = QtWidgets.QFileDialog.getOpenFileName(parent=self, directory=initial_folder)
+        res = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self, directory=initial_folder
+        )
         path = res[0]
         if path != "":
             self.setMap(path)
@@ -726,7 +814,10 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         self.pixmap_item = QtWidgets.QGraphicsPixmapItem(pixmap)
         self.pixmap_item.setZValue(-1.0)  # make sure map is always in the background
         self.pixmap_item.setScale(self.mapData.resolution)
-        self.pixmap_item.setOffset(self.mapData.origin[0] / self.mapData.resolution, self.mapData.origin[1] / self.mapData.resolution)
+        self.pixmap_item.setOffset(
+            self.mapData.origin[0] / self.mapData.resolution,
+            self.mapData.origin[1] / self.mapData.resolution,
+        )
         self.gscene.addItem(self.pixmap_item)
 
     def getMapData(self, path: str) -> dict:
@@ -743,7 +834,11 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
     def onAddPedsimAgentClicked(self):
         yaml_file = ""
         try:
-            yaml_file = os.path.join(get_ros_package_path("simulator_setup"), "dynamic_obstacles", "person_two_legged.model.yaml")
+            yaml_file = os.path.join(
+                get_ros_package_path("simulator_setup"),
+                "dynamic_obstacles",
+                "person_two_legged.model.yaml",
+            )
         except:
             pass
 
@@ -752,11 +847,13 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         self.addPedsimAgentWidget(new_agent)
 
     def addPedsimAgentWidget(self, agent: PedsimAgent) -> PedsimAgentWidget:
-        '''
+        """
         Adds a new pedsim agent widget with the given agent.
         Warning: self.arenaScenario is not updated. Management of self.arenaScenario happens outside of this function.
-        '''
-        w = PedsimAgentWidget(self.numObstacles, agent, self.gscene, self.gview, parent=self)
+        """
+        w = PedsimAgentWidget(
+            self.numObstacles, agent, self.gscene, self.gview, parent=self
+        )
         self.obstacles_frame.layout().addWidget(w)
         self.numObstacles += 1
         return w
@@ -764,7 +861,9 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
     def onAddFlatlandObjectClicked(self):
         model_path = ""
         try:
-            model_path = os.path.join(get_ros_package_path("simulator_setup"), "obstacles", "shelf.yaml")
+            model_path = os.path.join(
+                get_ros_package_path("simulator_setup"), "obstacles", "shelf.yaml"
+            )
         except:
             pass
 
@@ -773,10 +872,10 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         self.addFlatlandObjectWidget(new_object)
 
     def addFlatlandObjectWidget(self, object: FlatlandObject) -> FlatlandObjectWidget:
-        '''
+        """
         Adds a new flatland object widget with the given agent.
         Warning: self.arenaScenario is not updated. Management of self.arenaScenario happens outside of this function.
-        '''
+        """
         w = FlatlandObjectWidget(self.numObstacles, object, self.gscene, self.gview)
         self.obstacles_frame.layout().addWidget(w)
         self.numObstacles += 1
@@ -813,16 +912,28 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         return str(self.lastNameId)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent):
-        if event.key() == QtCore.Qt.Key.Key_Escape or event.key() == QtCore.Qt.Key.Key_Return:
+        if (
+            event.key() == QtCore.Qt.Key.Key_Escape
+            or event.key() == QtCore.Qt.Key.Key_Return
+        ):
             self.disableAddWaypointMode()
 
-        if event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier and event.key() == QtCore.Qt.Key.Key_C:
+        if (
+            event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier
+            and event.key() == QtCore.Qt.Key.Key_C
+        ):
             self.copied = self.gscene.selectedItems()
 
-        if event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier and event.key() == QtCore.Qt.Key.Key_V:
+        if (
+            event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier
+            and event.key() == QtCore.Qt.Key.Key_V
+        ):
             self.pasteElements()
 
-        if event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier and event.key() == QtCore.Qt.Key.Key_D:
+        if (
+            event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier
+            and event.key() == QtCore.Qt.Key.Key_D
+        ):
             self.toggleWaypointMode()
 
         return super().keyPressEvent(event)
@@ -836,46 +947,50 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
                     widget.onAddWaypointClicked()
 
     def pasteElements(self):
-            # duplicate copied items
-            for item in self.copied:
-                widget = item.parentWidget
-                if isinstance(widget, PedsimAgentWidget):
-                    widget.save()
-                    agent = copy.deepcopy(widget.pedsimAgent)
-                    agent.name = self.generateName()
-                    # move agent and waypoints a bit
-                    agent.pos[0] += 1.0
-                    agent.pos[1] += 1.0
-                    for wp in agent.waypoints:
-                        wp[0] += 1.0
-                        wp[1] += 1.0
-                    new_widget = self.addPedsimAgentWidget(agent)
-                    # select new item and waypoints
-                    new_widget.graphicsPathItem.setSelected(True)
-                    for w in new_widget.getWaypointWidgets():
-                        w.ellipseItem.setSelected(True)
-                    # unselect old item and waypoints
-                    widget.graphicsPathItem.setSelected(False)
-                    for w in widget.getWaypointWidgets():
-                        w.ellipseItem.setSelected(False)
-                elif isinstance(widget, FlatlandObjectWidget):
-                    widget.save()
-                    obj = copy.deepcopy(widget.flatlandObject)
-                    obj.name = self.generateName()
-                    obj.pos[0] += 1.0
-                    obj.pos[1] += 1.0
-                    new_widget = self.addFlatlandObjectWidget(obj)
-                    # select new item
-                    new_widget.graphicsPathItem.setSelected(True)
-                    # unselect old item
-                    widget.graphicsPathItem.setSelected(False)
+        # duplicate copied items
+        for item in self.copied:
+            widget = item.parentWidget
+            if isinstance(widget, PedsimAgentWidget):
+                widget.save()
+                agent = copy.deepcopy(widget.pedsimAgent)
+                agent.name = self.generateName()
+                # move agent and waypoints a bit
+                agent.pos[0] += 1.0
+                agent.pos[1] += 1.0
+                for wp in agent.waypoints:
+                    wp[0] += 1.0
+                    wp[1] += 1.0
+                new_widget = self.addPedsimAgentWidget(agent)
+                # select new item and waypoints
+                new_widget.graphicsPathItem.setSelected(True)
+                for w in new_widget.getWaypointWidgets():
+                    w.ellipseItem.setSelected(True)
+                # unselect old item and waypoints
+                widget.graphicsPathItem.setSelected(False)
+                for w in widget.getWaypointWidgets():
+                    w.ellipseItem.setSelected(False)
+            elif isinstance(widget, FlatlandObjectWidget):
+                widget.save()
+                obj = copy.deepcopy(widget.flatlandObject)
+                obj.name = self.generateName()
+                obj.pos[0] += 1.0
+                obj.pos[1] += 1.0
+                new_widget = self.addFlatlandObjectWidget(obj)
+                # select new item
+                new_widget.graphicsPathItem.setSelected(True)
+                # unselect old item
+                widget.graphicsPathItem.setSelected(False)
 
     def onNewScenarioClicked(self):
         pass
 
     def onOpenClicked(self):
-        initial_folder = os.path.join(get_ros_package_path("simulator_setup"), "scenarios")
-        res = QtWidgets.QFileDialog.getOpenFileName(parent=self, directory=initial_folder)
+        initial_folder = os.path.join(
+            get_ros_package_path("simulator_setup"), "scenarios"
+        )
+        res = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self, directory=initial_folder
+        )
         path = res[0]
         if path != "":
             self.loadArenaScenario(path)
@@ -886,9 +1001,13 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
             self.onSaveAsClicked()
 
     def onSaveAsClicked(self) -> bool:
-        initial_folder = os.path.join(get_ros_package_path("simulator_setup"), "scenarios")
+        initial_folder = os.path.join(
+            get_ros_package_path("simulator_setup"), "scenarios"
+        )
 
-        res = QtWidgets.QFileDialog.getSaveFileName(parent=self, directory=initial_folder)
+        res = QtWidgets.QFileDialog.getSaveFileName(
+            parent=self, directory=initial_folder
+        )
         path = res[0]
         if path != "":
             return self.save(path)
@@ -933,8 +1052,12 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         # TODO
 
         # robot position
-        self.robotAgentWidget.startXSpinBox.setValue(self.arenaScenario.robotPosition[0])
-        self.robotAgentWidget.startYSpinBox.setValue(self.arenaScenario.robotPosition[1])
+        self.robotAgentWidget.startXSpinBox.setValue(
+            self.arenaScenario.robotPosition[0]
+        )
+        self.robotAgentWidget.startYSpinBox.setValue(
+            self.arenaScenario.robotPosition[1]
+        )
         # robot goal
         self.robotAgentWidget.goalXSpinBox.setValue(self.arenaScenario.robotGoal[0])
         self.robotAgentWidget.goalYSpinBox.setValue(self.arenaScenario.robotGoal[1])
@@ -942,10 +1065,13 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         # map
         self.setMap(self.arenaScenario.mapPath)
 
+        # resets
+        self.robotAgentWidget.resetsSpinBox.setValue(self.arenaScenario.resets)
+
     def updateArenaScenarioFromWidgets(self):
-        '''
+        """
         Save data from widgets into self.arenaScenario.
-        '''
+        """
         # reset scenario
         self.arenaScenario.__init__()
 
@@ -960,22 +1086,28 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         # save static obstacles
         for w in self.getFlatlandObjectWidgets():
             w.save()  # save all data from widget(s) into flatland object
-            self.arenaScenario.staticObstacles.append(w.flatlandObject)  # add flatland object
+            self.arenaScenario.staticObstacles.append(
+                w.flatlandObject
+            )  # add flatland object
 
         # save map path
         if self.mapData != None:
             self.arenaScenario.mapPath = self.mapData.path
 
         # robot position
-        self.arenaScenario.robotPosition[0] = self.robotAgentWidget.startXSpinBox.value()
-        self.arenaScenario.robotPosition[1] = self.robotAgentWidget.startYSpinBox.value()
+        self.arenaScenario.robotPosition[
+            0
+        ] = self.robotAgentWidget.startXSpinBox.value()
+        self.arenaScenario.robotPosition[
+            1
+        ] = self.robotAgentWidget.startYSpinBox.value()
         # robot goal
         self.arenaScenario.robotGoal[0] = self.robotAgentWidget.goalXSpinBox.value()
         self.arenaScenario.robotGoal[1] = self.robotAgentWidget.goalYSpinBox.value()
 
         # interactive obstacles
         # TODO
-
+        self.arenaScenario.resets = self.robotAgentWidget.resetsSpinBox.value()
 
 
 if __name__ == "__main__":
