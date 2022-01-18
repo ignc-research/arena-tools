@@ -10,6 +10,7 @@ class Complexity:
 
         self.density_gird= []
 
+    #todo: calculating the frequency of density in density list and divide it by list size
     def entropy(self):
         features=[]
         #example
