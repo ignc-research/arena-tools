@@ -11,7 +11,7 @@ A collection of tools to make working with [Arena-Rosnav-3D](https://github.com/
 ## Installation
 Install Python packages (preferably in your virtual environment):
 ```bash
-pip3 install pyqt5 numpy pyyaml lxml scikit-image Pillow scikit-image
+pip3 install pyqt5 numpy pyyaml lxml scikit-image Pillow scikit-image opencv-python matplotlib
 pip install PyQt5 --upgrade
 ```
 
