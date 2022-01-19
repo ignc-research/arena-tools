@@ -1,4 +1,4 @@
-import cv2, sys, yaml, os
+import cv2, sys, yaml, os, rospkg
 import numpy as np
 from argparse import ArgumentParser
 
@@ -96,15 +96,16 @@ class Complexity:
 
 if __name__ == '__main__':
 
+    dir = rospkg.RosPack().get_path('arena-tools')
     # reading in user data
     parser = ArgumentParser()
-    parser.add_argument("--image_path", action="store", dest="image_path", default="/home/elias/catkin_ws/src/forks/arena-tools/aws_house/map.pgm",
+    parser.add_argument("--image_path", action="store", dest="image_path", default=f"{dir}/aws_house/map.pgm",
                         help="path to the floor plan of your world. Usually in .pgm format",
                         required=False)
-    parser.add_argument("--yaml_path", action="store", dest="yaml_path", default="/home/elias/catkin_ws/src/forks/arena-tools/aws_house/map.yaml",
+    parser.add_argument("--yaml_path", action="store", dest="yaml_path", default=f"{dir}/aws_house/map.yaml",
                         help="path to the .yaml description file of your floor plan",
                         required=False)
-    parser.add_argument("--dest_path", action="store", dest="dest_path", default="/home/elias/catkin_ws/src/forks/arena-tools/aws_house",
+    parser.add_argument("--dest_path", action="store", dest="dest_path", default=f"{dir}/aws_house",
                         help="location to store the complexity data about your map",
                         required=False)
     args = parser.parse_args()
