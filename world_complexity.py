@@ -1,6 +1,7 @@
 import cv2, sys, yaml, os, rospkg
 import numpy as np
 from argparse import ArgumentParser
+from collections import Counter
 
 # see comments at the end of the document
 
@@ -16,7 +17,7 @@ class Complexity:
         if img_path[-3:] == 'pgm':
             img = cv2.imread(img_path)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            th, dst = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY) # @Nilou wofür?
+            th, dst = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY) #convert image pixels to binary pixels 0 or 255
 
         # for infos on parameters: http://wiki.ros.org/map_server
         with open(yaml_path, 'r') as stream:
@@ -54,14 +55,28 @@ class Complexity:
             windowList.append(window)
             featureVector = self.extractFeatures(window)
 
+        count = Counter(featureVector)
+        p_zero = count[0.0]/len(featureVector)
+        p_one= count[1]/len(featureVector)
+        p_two= count[0.25]/len(featureVector)
+        p_five= count[0.5]/len(featureVector)
+        p_seven= count[0.75]/len(featureVector)
+        pList.append(p_zero)
+        pList.append(p_one)
+        pList.append(p_two)
+        pList.append(p_five)
+        pList.append(p_seven)
+
         entropy= 0
-        for i in featureVector:
-            if i != float(0):
-                entropy += (i) * np.log(i)
+        for pDensity in pList:
+            if pDensity != 0:
+                entropy += (pDensity) * numpy.log(pDensity)
+
         entropy = (-1) * entropy
+        maxEntropy = numpy.log2(5)
 
         print('calculated entropy:', entropy)
-        print('Size of image:', img.shape)
+        print('Max. Entropy:', maxEntropy)
 
 
 
@@ -117,7 +132,7 @@ if __name__ == '__main__':
     # calculating metrics
     data['MapSize'] = Complexity().determine_map_size(img, map_info)
     data["OccupancyRatio"] = Complexity().occupancy_ratio(img)
-    #data["Entropy"] = Complexity().entropy()
+    data["Entropy"] = Complexity().entropy()
 
     # dump results
     Complexity().save_information(data, args.dest_path)
