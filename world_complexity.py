@@ -3,6 +3,20 @@ import numpy as np
 from argparse import ArgumentParser
 from collections import Counter
 
+# TODO s
+# - identify interior area @Elias
+# - identify objects & contours: ev. with https://learnopencv.com/contour-detection-using-opencv-python-c/
+# - calcutlate distance between objects: ev. with https://www.pyimagesearch.com/2016/04/04/measuring-distance-between-objects-in-an-image-with-opencv/
+#       To calculate:
+#           - Number of static obs
+
+
+
+
+
+
+
+
 # see comments at the end of the document
 
 class Complexity:
@@ -36,25 +50,26 @@ class Complexity:
         """Proportion of the occupied area
         """
         # TODO to find the actual occupancy only interior occupied pixels should be taken into account
+        # idea get the pos on the sides (a,b,c,d) where the value is first 0, use: https://stackoverflow.com/questions/9553638/find-the-index-of-an-item-in-a-list-of-lists
         free_space = np.count_nonzero(img)
         return 1 - free_space/(img.shape[0] * img.shape[1])
 
+    def occupancy_distribution(self, img: list):
+        # Idea: https://jamboard.google.com/d/1ImC7CSPc6Z3Dkxh5I1wX_kkTjEd6GFWmMywHR3LD_XE/viewer?f=0
+        raise NotImplementedError
 
-    def entropy(self):
+
+    def entropy(self, img_gray):
         features=[]
-        #example
-       # T = np.array([[255, 255, 255,255, 255,255], [255, 255, 255,255, 255,255], [255, 255, 255,255, 255,255], [255, 255, 255,255, 255,255]])
-        img = cv2.imread('hospital.pgm')
-        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         th, dst = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY)
-       # cv2.imwrite("opencv-threshold-example.jpg", dst)
-       # np.savetxt('test.txt', dst)
+
         windows = self.sliding_window(dst, 2, (2, 2))
         windowList= []
         for window in windows:
             windowList.append(window)
             featureVector = self.extractFeatures(window)
 
+        pList = []
         count = Counter(featureVector)
         p_zero = count[0.0]/len(featureVector)
         p_one= count[1]/len(featureVector)
@@ -70,13 +85,14 @@ class Complexity:
         entropy= 0
         for pDensity in pList:
             if pDensity != 0:
-                entropy += (pDensity) * numpy.log(pDensity)
+                entropy += (pDensity) * np.log(pDensity)
 
         entropy = (-1) * entropy
-        maxEntropy = numpy.log2(5)
+        maxEntropy = np.log2(5)
 
         print('calculated entropy:', entropy)
         print('Max. Entropy:', maxEntropy)
+        return float(entropy), float(maxEntropy)
 
 
 
@@ -132,7 +148,7 @@ if __name__ == '__main__':
     # calculating metrics
     data['MapSize'] = Complexity().determine_map_size(img, map_info)
     data["OccupancyRatio"] = Complexity().occupancy_ratio(img)
-    data["Entropy"] = Complexity().entropy()
+    data["Entropy"], data["MaxEntropy"] = Complexity().entropy(img)
 
     # dump results
     Complexity().save_information(data, args.dest_path)
