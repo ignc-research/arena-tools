@@ -1,6 +1,7 @@
-Entropy: 0.3084169970197497
+Entropy: -0.0
 MapSize:
 - 20.0
 - 20.0
 MaxEntropy: 2.321928094887362
+NumObs: 135
 OccupancyRatio: 0.036775
