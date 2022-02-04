@@ -1,4 +1,3 @@
-from unittest import skip
 import cv2
 import sys
 import yaml
@@ -7,6 +6,8 @@ import rospkg
 import numpy as np
 from argparse import ArgumentParser
 from collections import Counter
+from unittest import skip
+from scipy import spatial
 
 # TODO s
 # - identify interior area @Elias
@@ -17,6 +18,11 @@ from collections import Counter
 
 
 # see comments at the end of the document
+
+ROBOT_RADIUS = 0.3 # [m]
+MIN_INTENDED_WALKWAY_WITH = 0.2 # [m]
+MIN_OBS_SIZE = 0.2 # [m]: the obs must be at least 20 cm to avoid detecting obstacles that are not actually there due to miscoloured pixel
+
 
 class Complexity:
 
@@ -31,6 +37,8 @@ class Complexity:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             # convert image pixels to binary pixels 0 or 255
             th, dst = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY)
+        else:
+            return NotImplementedError
 
         # for infos on parameters: http://wiki.ros.org/map_server
         with open(yaml_path, 'r') as stream:
@@ -104,39 +112,34 @@ class Complexity:
 
         return self.density_gird
 
-    def determine_all_pixels_of_this_obs(self, img: list, start_pos: list):
+
+
+    def check_surrounding(self, img, i, j, obs_coordinates):
         """Determining all pixels that are occupied by this obstacle
         args:
             img: the floor plan
-            obs_list: list to append the occupied pixels
-            start_pos: Coordinates were an occupied pixel was detected
+            i,j: start coordinate of the obstacle
+            obs_coordinates: list of coordinates occupied by this obstacle
+
+        return:
+            img: floor plan without the obstacle on it
+            obs_coordinates: tuple of all pixel-indices occupied by the obstacle
         """
-        obs_coordinates = []
+        
+        # marking the pixel and setting it to not occupied to avoid double assignment
+        obs_coordinates.append((i,j))
+        img[i,j] = 205
 
-        # we check all sourounding pixels if there are also occupied. If so they are consitered to belong to this obs.
-        for y in range(start_pos[1], img.shape[1]):
-
-            # this is checking if the obstacle extends to the right
-            for i, x in enumerate(range(start_pos[0], img.shape[0])):
-                if img[x, y] != 0:
-                    break
-
-                obs_coordinates.append((x, y))
-
-                # to ensure no occupied pixel is counted twiche we set the pixel to not occupied after it as been detected
-                img[x, y] = 205
-
-            # this is checking if the obstacle extends to the left
-            for j, x in enumerate(range(0, start_pos[0])):
-                if img[x, y] != 0:
-                    break
-                obs_coordinates.append((x, y))
-
-                # to ensure no occupied pixel is counted twiche we set the pixel to not occupied after it as been detected
-                img[x, y] = 0
-
-            if i+j == 0:
-                break
+        # for every point we check in a star pattern, whether the surrounding cells are occupied also
+        if img[i-1][j] == 0 and i>=1 : 
+            self.check_surrounding(img, i-1, j, obs_coordinates)
+        if img[i+1][j] == 0 and i+1 <= img.shape[0]: 
+            self.check_surrounding(img, i+1, j, obs_coordinates)
+        if img[i][j-1] == 0 and j>=1 : 
+            self.check_surrounding(img, i, j-1, obs_coordinates)
+        if img[i][j+1] == 0 and i+1 <= img.shape[1]: 
+            self.check_surrounding(img, i, j+1, obs_coordinates)
+        
         return img, obs_coordinates
 
     def number_of_static_obs(self, img: list):
@@ -144,34 +147,55 @@ class Complexity:
         args:
             img: floorplan to evaluate
         """
+        # to allow more recursive function calls
+        sys.setrecursionlimit(20000)
+        
         global obs_list
         obs_list = {}
         obs_num = 0
+        
+        # number of pixels an obstacle must have at least (default = 2)
+        min_pix_size = MIN_OBS_SIZE / map_info['resolution']
+
 
         # going through every pixel and checking if its occupied
         for pixel_y in range(img.shape[1]):
             for pixel_x in range(img.shape[0]):
                 if img[pixel_x, pixel_y] == 0:
-                    img, obs_list[obs_num] = self.determine_all_pixels_of_this_obs(
-                        img, [pixel_x, pixel_y])
-                    obs_num += 1
+                    obs_coordinates = []
+                    img, temp = self.check_surrounding(img, pixel_x, pixel_y, obs_coordinates)
+                    if len(temp) >= min_pix_size:
+                        obs_list[obs_num] = temp
+                        obs_num += 1
 
         return len(obs_list)
+
+
 
     def distance_between_obs(self):
         """Finds distance to all other obstacles
         """
+        def do_kdtree(combined_x_y_arrays,points):
+            mytree = spatial.cKDTree(combined_x_y_arrays)
+            dist, _ = mytree.query(points)
+            return dist
+
+        # the walkway should be at least this whide to be considert has walkway
+        min_walkway_size = MIN_INTENDED_WALKWAY_WITH / map_info['resolution']
+
+        min_obs_dist = 10000 # large number
         for key, coordinates in obs_list.items():
-            obs_list[f'{key}_dist']
 
             distances = []
             for key_other, coordinates_other in obs_list.items():
-                if key_other == key:
-                    skip
+                if key_other == key: continue
+                # this checks the distance between the pixels of the obstacles, and only selects the min distance between the pixels
+                dist_between_pixel_arrays = do_kdtree(np.array(coordinates_other),np.array(coordinates))
+                min_dist_between_pixel_arrays = min(dist_between_pixel_arrays[dist_between_pixel_arrays>min_walkway_size])
+                if min_obs_dist > min_dist_between_pixel_arrays: min_obs_dist = min_dist_between_pixel_arrays
 
-                # idea: check for closest coordinate + distance & append this to obslist dist
-                # ev. here: https://codereview.stackexchange.com/questions/28207/finding-the-closest-point-to-a-list-of-points
-                raise NotImplementedError
+        print(min_obs_dist)
+        return(min_obs_dist*map_info['resolution'])
 
     def save_information(self, data: dict, dest: str):
         """To save the evaluated metrics
@@ -208,6 +232,7 @@ if __name__ == '__main__':
     data['MapSize'] = Complexity().determine_map_size(img, map_info)
     data["OccupancyRatio"] = Complexity().occupancy_ratio(img)
     data["NumObs"] = Complexity().number_of_static_obs(img)
+    data["MinObsDis"] = Complexity().distance_between_obs()
     data["Entropy"], data["MaxEntropy"] = Complexity().entropy(img)
 
     # dump results
@@ -217,3 +242,5 @@ if __name__ == '__main__':
 
 # NOTE: for our complexity measure we make some assumptions
 # 1. We ignore the occupancy threshold. Every pixel > 0 is considert to be fully populated even though this is not entirely accurate since might also only partially be populated (we therefore slightly overestimate populacy.)
+
+
