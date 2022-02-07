@@ -187,7 +187,7 @@ class Complexity:
         areaList = []
         xcoordinate_center = []
         ycoordinate_center = []
-        image = cv2.imread('/home/oem/catkin_ws/src/forks/arena-tools/aws_house/obs.pgm')
+        image = cv2.imread('/home/oem/catkin_ws/src/forks/arena-tools/aws_house/small_warehouse.pgm')
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         (thresh, blackAndWhiteImage) = cv2.threshold(gray, 127, 255,
                                                      cv2.THRESH_BINARY)
@@ -202,7 +202,8 @@ class Complexity:
         (cnt, hierarchy) = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         cv2.drawContours(rgb, cnt, -1, (0, 255, 0), 2)
-        # cv2.imshow('map5',rgb)
+        #
+        cv2.imshow('map5',rgb)
         print("No of circles: ", len(cnt))
         for c in cnt:
             if cv2.contourArea(c) > 1:
@@ -250,6 +251,7 @@ class Complexity:
         xIndices_interval = []
         intervalPointList = []
         angle = []
+        subAngleList = []
         xInterval = [min(xCoord) - 10,
                      min(xCoord) + 10]  # finds the smallest x_coordination and forms an interval with +-10
         print('xInterval', xInterval)
@@ -280,18 +282,31 @@ class Complexity:
                     if yCoord[index] <= yInterval[1] and yCoord[index] >= yInterval[0]:  #find y with indices of x
                         intervalPointList.append([item, yCoord[index]])  #find coordination of point in interval
                         point = [item, yCoord[index]]
-                        angle.append(self.get_angle([xInterval[0], yInterval[0]], point)) #calculate angle of all points in interval to the first x,y of interval
+                        xCenter = (xInterval[1]- xInterval[0] )/2
+                        yCenter = (yInterval[1]- yInterval[0]) /2
+                        angle.append(self.get_angle([xInterval[0]+ xCenter, yInterval[0] + yCenter], point)) #calculate angle of all points in interval to the first x,y of interval
+                      #  angle.append(self.get_angle([xInterval[0] + xCenter, yInterval[0] + yCenter], point))
                         print('point', point)
                         print('x interval', xInterval)
                         print('y Interval', yInterval)
-                        print('origin', [xInterval[0], yInterval[0]])
-                        print('angle', angle)
+                        print('center of Interval, ', [xInterval[0] + xCenter, yInterval[0] + yCenter])
+                        print('angles to x-axis', angle)
                 if listLength == counter:   #when the y interval is over, window should go in x direction and then again in y direction, to find the new points
-                    yInterval = [yInterval[1], yInterval[1]+20]
+                    yInterval = [yInterval[1], yInterval[1]+10]
+                    sortedAngle = sorted(angle)
+                    for index in range(len(sortedAngle)):
+                        if index != 0:
+                             sub = sortedAngle[index] - sortedAngle[index-1]
+                             subAngleList.append(sub)
+                    sumAngles = sum(subAngleList)
+                    lastAngle = 360 - sumAngles
+                    subAngleList.append(lastAngle)
+                    print('angles between every obstacle',subAngleList)
+                    subAngleList = []
                     angle = []
                     counter = 0
             if not (yInterval[1] <= yMax +10 ):
-                xInterval = [xInterval[1], xInterval[1] + 20]
+                xInterval = [xInterval[1], xInterval[1] + 10]
                 yInterval = orgYInterval
 
 
@@ -308,8 +323,6 @@ class Complexity:
         if angle < 0:
             angle = 360 + angle
 
-        if angle < 45:  #finds the largest angle
-            angle = 90 - angle
         return angle
 
 
