@@ -1,3 +1,4 @@
+from unittest import skip
 import cv2
 import sys
 import yaml
@@ -6,13 +7,15 @@ import rospkg
 import numpy as np
 from argparse import ArgumentParser
 from collections import Counter
-from unittest import skip
-from scipy import spatial
 from imutils import contours, perspective
 import imutils
 from scipy.spatial import distance as dist
 from pathlib import Path
 import csv
+from matplotlib import pyplot as plt
+import math
+from collections import namedtuple
+
 
 # TODO s
 # - identify interior area @Elias
@@ -24,11 +27,6 @@ import csv
 
 # see comments at the end of the document
 
-ROBOT_RADIUS = 0.3 # [m]
-MIN_INTENDED_WALKWAY_WITH = 0.2 # [m]
-MIN_OBS_SIZE = 0.2 # [m]: the obs must be at least 20 cm to avoid detecting obstacles that are not actually there due to miscoloured pixel
-
-
 class Complexity:
 
     def __init__(self):
@@ -37,13 +35,11 @@ class Complexity:
     def extract_data(self, img_path: str, yaml_path: str):
 
         # reading in the image and converting to 0 = occupied, 1 = not occupied
-        if img_path[-3:] == 'pgm' or img_path[-3:] =='jpg':
+        if img_path[-3:] == 'pgm' or img_path[-3:] == 'jpg':
             img_origin = cv2.imread(img_path)
             img = cv2.cvtColor(img_origin, cv2.COLOR_BGR2GRAY)
             # convert image pixels to binary pixels 0 or 255
             th, dst = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY)
-        else:
-            return NotImplementedError
 
         # for infos on parameters: http://wiki.ros.org/map_server
         with open(yaml_path, 'r') as stream:
@@ -62,7 +58,7 @@ class Complexity:
         # TODO to find the actual occupancy only interior occupied pixels should be taken into account
         # idea get the pos on the sides (a,b,c,d) where the value is first 0, use: https://stackoverflow.com/questions/9553638/find-the-index-of-an-item-in-a-list-of-lists
         free_space = np.count_nonzero(img)
-        return 1 - free_space/(img.shape[0] * img.shape[1])
+        return 1 - free_space / (img.shape[0] * img.shape[1])
 
     def occupancy_distribution(self, img: list):
         # Idea: https://jamboard.google.com/d/1ImC7CSPc6Z3Dkxh5I1wX_kkTjEd6GFWmMywHR3LD_XE/viewer?f=0
@@ -78,11 +74,11 @@ class Complexity:
             featureVector = self.extractFeatures(window)
         pList = []
         count = Counter(featureVector)
-        p_zero = count[0.0]/len(featureVector)
-        p_one = count[1]/len(featureVector)
-        p_two = count[0.25]/len(featureVector)
-        p_five = count[0.5]/len(featureVector)
-        p_seven = count[0.75]/len(featureVector)
+        p_zero = count[0.0] / len(featureVector)
+        p_one = count[1] / len(featureVector)
+        p_two = count[0.25] / len(featureVector)
+        p_five = count[0.5] / len(featureVector)
+        p_seven = count[0.75] / len(featureVector)
         pList.append(p_zero)
         pList.append(p_one)
         pList.append(p_two)
@@ -98,107 +94,82 @@ class Complexity:
         print('Max. Entropy:', maxEntropy)
         return float(entropy), float(maxEntropy)
 
-
     def sliding_window(self, image, stepSize, windowSize):
         for y in range(0, image.shape[0], stepSize):
             for x in range(0, image.shape[1], stepSize):
                 yield (x, y, image[y:y + windowSize[1], x:x + windowSize[0]])
 
-
     def extractFeatures(self, window):
 
         freq_obstacles = window[2] == 0
         total = freq_obstacles.sum()
-        density = total * 1/4
+        density = total * 1 / 4
         self.density_gird.append(density)
 
         return self.density_gird
 
-
-
-    def check_surrounding(self, img, i, j, obs_coordinates):
+    def determine_all_pixels_of_this_obs(self, img: list, start_pos: list):
         """Determining all pixels that are occupied by this obstacle
         args:
             img: the floor plan
-            i,j: start coordinate of the obstacle
-            obs_coordinates: list of coordinates occupied by this obstacle
-
-        return:
-            img: floor plan without the obstacle on it
-            obs_coordinates: tuple of all pixel-indices occupied by the obstacle
+            obs_list: list to append the occupied pixels
+            start_pos: Coordinates were an occupied pixel was detected
         """
-        
-        # marking the pixel and setting it to not occupied to avoid double assignment
-        obs_coordinates.append((i,j))
-        img[i,j] = 205
+        obs_coordinates = []
 
-        # for every point we check in a star pattern, whether the surrounding cells are occupied also
-        if img[i-1][j] == 0 and i>=1 : 
-            self.check_surrounding(img, i-1, j, obs_coordinates)
-        if img[i+1][j] == 0 and i+1 <= img.shape[0]: 
-            self.check_surrounding(img, i+1, j, obs_coordinates)
-        if img[i][j-1] == 0 and j>=1 : 
-            self.check_surrounding(img, i, j-1, obs_coordinates)
-        if img[i][j+1] == 0 and i+1 <= img.shape[1]: 
-            self.check_surrounding(img, i, j+1, obs_coordinates)
-        
+        # we check all sourounding pixels if there are also occupied. If so they are consitered to belong to this obs.
+        for y in range(start_pos[1], img.shape[1]):
+            # this is checking if the obstacle extends to the right
+            for i, x in enumerate(range(start_pos[0], img.shape[0])):
+                if img[x, y] != 0:
+                    break
+                obs_coordinates.append((x, y))
+                # to ensure no occupied pixel is counted twiche we set the pixel to not occupied after it as been detected
+                img[x, y] = 205
+            # this is checking if the obstacle extends to the left
+            for j, x in enumerate(range(0, start_pos[0])):
+                if img[x, y] != 0:
+                    break
+                obs_coordinates.append((x, y))
+                # to ensure no occupied pixel is counted twiche we set the pixel to not occupied after it as been detected
+                img[x, y] = 0
+            if i + j == 0:
+                break
         return img, obs_coordinates
-
 
     def number_of_static_obs(self, img: list):
         """Determining the obstacle in the image incl. their respective pixels
         args:
             img: floorplan to evaluate
         """
-        # to allow more recursive function calls
-        sys.setrecursionlimit(20000)
-        
         global obs_list
         obs_list = {}
         obs_num = 0
-        
-        # number of pixels an obstacle must have at least (default = 2)
-        min_pix_size = MIN_OBS_SIZE / map_info['resolution']
-
 
         # going through every pixel and checking if its occupied
         for pixel_y in range(img.shape[1]):
             for pixel_x in range(img.shape[0]):
                 if img[pixel_x, pixel_y] == 0:
-                    obs_coordinates = []
-                    img, temp = self.check_surrounding(img, pixel_x, pixel_y, obs_coordinates)
-                    if len(temp) >= min_pix_size:
-                        obs_list[obs_num] = temp
-                        obs_num += 1
+                    img, obs_list[obs_num] = self.determine_all_pixels_of_this_obs(
+                        img, [pixel_x, pixel_y])
+                    obs_num += 1
 
         return len(obs_list)
-
 
     def distance_between_obs(self):
         """Finds distance to all other obstacles
         """
-        def do_kdtree(combined_x_y_arrays,points):
-            mytree = spatial.cKDTree(combined_x_y_arrays)
-            dist, _ = mytree.query(points)
-            return dist
-
-        # the walkway should be at least this whide to be considert has walkway
-        min_walkway_size = MIN_INTENDED_WALKWAY_WITH / map_info['resolution']
-
-        min_obs_dist = 10000 # large number
         for key, coordinates in obs_list.items():
+            obs_list[f'{key}_dist']
 
             distances = []
             for key_other, coordinates_other in obs_list.items():
-                if key_other == key: continue
-                # this checks the distance between the pixels of the obstacles, and only selects the min distance between the pixels
-                dist_between_pixel_arrays = do_kdtree(np.array(coordinates_other),np.array(coordinates))
-                min_dist_between_pixel_arrays = min(dist_between_pixel_arrays[dist_between_pixel_arrays>min_walkway_size])
-                if min_obs_dist > min_dist_between_pixel_arrays: min_obs_dist = min_dist_between_pixel_arrays
+                if key_other == key:
+                    skip
 
-        print(min_obs_dist)
-        return(min_obs_dist*map_info['resolution'])
-
+                # idea: check for closest coordinate + distance & append this to obslist dist
+                # ev. here: https://codereview.stackexchange.com/questions/28207/finding-the-closest-point-to-a-list-of-points
+                raise NotImplementedError
 
     def save_information(self, data: dict, dest: str):
         """To save the evaluated metrics
@@ -212,160 +183,137 @@ class Complexity:
 
 
 
-    def obst_detection(self, img, file_name):
+    def no_obstacles(self):
         areaList = []
-        #img = cv2.imread('aws_house.pgm')
-        thresh = cv2.threshold(img, 105, 255, cv2.THRESH_BINARY_INV)[1]
-
-        thresh = 255 - thresh
-
-       # cv2.imshow('treh', thresh)
-        #self.crop(img)
-        result = self.edge_detection(thresh, areaList, file_name)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        # binarize the image
-        ret, bw = cv2.threshold(gray, 105, 255,
-                                cv2.THRESH_BINARY_INV)
-        connectivity = 1
-        nb_components, output, stats, centroids =cv2.connectedComponentsWithStats(bw, connectivity, cv2.CV_32S)
-        sizes = stats[1:, -1]
-        nb_components = nb_components - 1
-        min_size = 250  # threshhold value for objects in scene
-        img2 = np.zeros((img.shape), np.uint8)
-        for i in range(0, nb_components + 1):
-            # use if sizes[i] >= min_size: to identify your objects
-            color = np.random.randint(255, size=3)
-            # draw the bounding rectangele around each object
-            cv2.rectangle(img2, (stats[i][0], stats[i][1]), (stats[i][0] + stats[i][2], stats[i][1] + stats[i][3]),
-                          (0, 255, 0), 2)
-            img2[output == i + 1] = color
-
-       # cv2.+
-    # how('edges', result)
-       # cv2.imshow('image', img2)
-       # cv2.waitKey(0)
-
-
-    def get_contours(self, img):
-
-      #  img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)  # Apply the thresholding
-        blurred = cv2.GaussianBlur(img, (5, 5), 0)
-        canny = cv2.Canny(blurred, 30, 300)
-        (cnts, _) = cv2.findContours(canny.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-        return cnts
-
-
-
-    def edge_detection(self, img,areaList , file_name):
-
-        coordList = []
-       # img = cv2.imread('aws_house.pgm')
-       # thresh = cv2.threshold(img, 105, 255, cv2.THRESH_BINARY_INV)[1]
-       # thresh = 255 - thresh
-        cnts = self.get_contours(img)
-        print('number of obstacles',len(cnts))
-        mask = np.zeros(img.shape[:2], dtype=img.dtype)
-
-        # draw all contours larger than 20 on the mask
         xcoordinate_center = []
-        ycoordinate_center=[]
-        header_coordination =['Area', 'Length', 'Xcoordinate_center', 'Ycoordinate_center']
-        with open("Obstacle_coordinations_{}.csv".format(file_name), "w") as f1:
-            writer = csv.writer(f1, delimiter='\t',lineterminator='\n',)
-            writer.writerow(header_coordination)
-            for c in cnts:
-                if cv2.contourArea(c) > 5:
-                    area = int(cv2.contourArea(c))
-                    areaList.append(area)
-                    length = int(cv2.arcLength(c, True))
-                    x, y, w, h = cv2.boundingRect(c)
-                    cv2.drawContours(mask, [c], 0, (255), -1)
-                    M = cv2.moments(c)
-                    xcoord = int(M['m10'] / M['m00'])
-                    ycoord = int(M['m01'] / M['m00'])
-                    xcoordinate_center.append(xcoord)
-                    ycoordinate_center.append(ycoord)
-                    coordList =[area, length, xcoord, ycoord]
-                    writer.writerow(coordList)
-                   
-        areaSum = sum(areaList)
-        print('areaSum', areaSum)
-        # apply the mask to the original image
-        result = cv2.bitwise_and(img, img, mask=mask)
-        cnts = self.get_contours(result)
-        obst = result.copy()
-        cv2.drawContours(obst, cnts, -1, (255, 0, 0), 2)
-       # cv2.imshow('im',  cv2.cvtColor(obst, cv2.COLOR_BGR2RGB))
-        for cnt in cnts:
-            x, y, w, h = cv2.boundingRect(cnt)
-            cv2.rectangle(obst, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        ycoordinate_center = []
+        image = cv2.imread('/home/oem/catkin_ws/src/forks/arena-tools/aws_house/obs.pgm')
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        (thresh, blackAndWhiteImage) = cv2.threshold(gray, 127, 255,
+                                                     cv2.THRESH_BINARY)
+        #  cv2.imshow('map1',gray)
+        blur = cv2.GaussianBlur(gray, (11, 11), 0)
+        # cv2.imshow('map2',blur)
+        canny = cv2.Canny(blur, 30, 40, 3)
+        # cv2.imshow('map3', canny)
+        dilated = cv2.dilate(canny, (5, 5), iterations=0)
+        #  cv2.imshow('map4',dilated)
 
-        return cv2.cvtColor(obst, cv2.COLOR_BGR2RGB)
+        (cnt, hierarchy) = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        cv2.drawContours(rgb, cnt, -1, (0, 255, 0), 2)
+        # cv2.imshow('map5',rgb)
+        print("No of circles: ", len(cnt))
+        for c in cnt:
+            if cv2.contourArea(c) > 1:
+                area = int(cv2.contourArea(c))
+                areaList.append(area)
+                length = int(cv2.arcLength(c, True))
+                #  x, y, w, h = cv2.boundingRect(c)
+                #  cv2.drawContours(mask, [cnts[4]], 0, (255), -1)
+                M = cv2.moments(c)
+                xcoord = int(M['m10'] / M['m00'])
+                ycoord = int(M['m01'] / M['m00'])
+                xcoordinate_center.append(xcoord)
+                ycoordinate_center.append(ycoord)
+                coordList = [area, length, xcoord, ycoord]
+            #    print('area:' ,area)
+            #    print('length', length)#
+            # print('coordList', coordList)
+            # #  writer.writerow(coordList)
+        self.world_angles(xcoordinate_center, ycoordinate_center)
 
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        ax.xaxis.set_ticks_position('top')
+        ax.yaxis.grid(linestyle='-', color='gray')
+        ax.invert_yaxis()
+        ax.plot(xcoordinate_center, ycoordinate_center, 'ro', linewidth=1.5)
+        # V this adds the lines V
+        for x, y in zip(xcoordinate_center, ycoordinate_center):
+            plt.plot([0, x], [0, y], color="blue")
+            # ^ this adds the lines ^
+            plt.plot(x, y, 0, 0, linestyle='--')
+        # plt.text(x + 0.01, y + 0.01, user, fontsize=19)
 
-
-    def distance(self, image):
-        areaList = []
-        result = self.edge_detection(image, areaList)
-        cter = self.get_contours(result)
-        (cnts, _) = contours.sort_contours(cter)
-        colors = ((0, 0, 255), (240, 0, 159), (0, 165, 255), (255, 255, 0),
-                  (255, 0, 255))
-        refObj = None
-        for c in cter:  # loop over the contours individually
-
-            # if the contour is not sufficiently large, ignore it
-            # if cv2.contourArea(c) < 1:
-            #     continue
-            # compute the rotated bounding box of the contour
-            box = cv2.minAreaRect(c)
-            box = cv2.boxPoints(box) if imutils.is_cv2() else cv2.boxPoints(box)
-            box = np.array(box, dtype="int")
-            box = perspective.order_points(box)
-            cX = np.average(box[:, 0])
-            cY = np.average(box[:, 1])
-            if refObj is None:
-                (tl, tr, br, bl) = box
-                (tlblX, tlblY) = self.midpoint(tl, bl)
-                (trbrX, trbrY) = self.midpoint(tr, br)
-                D = dist.euclidean((tlblX, tlblY), (trbrX, trbrY))
-                refObj = (box, (cX, cY), D / 0.9)
-                continue
-            orig = image.copy()
-            cv2.drawContours(orig, [box.astype("int")], -1, (0, 255, 0), 1)
-            cv2.drawContours(orig, [refObj[0].astype("int")], -1, (0, 255, 0), 1)
-            refCoords = np.vstack([refObj[0], refObj[1]])
-            objCoords = np.vstack([box, (cX, cY)])
-
-            # loop over the original points
-            for ((xA, yA), (xB, yB), color) in zip(refCoords, objCoords, colors):
-                cv2.circle(orig, (int(xA), int(yA)), 3, color, -1)
-                cv2.circle(orig, (int(xB), int(yB)), 3, color, -1)
-                cv2.line(orig, (int(xA), int(yA)), (int(xB), int(yB)),
-                         color, 1)
-                D = dist.euclidean((xA, yA), (xB, yB)) / refObj[2]
-                (mX, mY) = self.midpoint((xA, yA), (xB, yB))
-                cv2.putText(orig, "{:.1f}in".format(D), (int(mX), int(mY - 10)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
-                imS = cv2.resize(orig, (500, 960))
-                cv2.imshow('image', imS)
-                cv2.waitKey(1000)
-
-    def midpoint(self, ptA, ptB):
-        return ((ptA[0] + ptB[0]) * 0.5, (ptA[1] + ptB[1]) * 0.5)
-
-
-    def get_plots(self, x, y):
-
-        plt.plot(x, y, 'ro')
         plt.show()
+        # plt.plot(xcoordinate_center, ycoordinate_center, 'ro')
+        # plt.show()
+        cv2.waitKey(10000)
 
+        return xcoordinate_center, ycoordinate_center
+
+
+    def world_angles(self, xCoord, yCoord):
+
+        xIndices = []
+        xIndices_interval = []
+        intervalPointList = []
+        angle = []
+        xInterval = [min(xCoord) - 10,
+                     min(xCoord) + 10]  # finds the smallest x_coordination and forms an interval with +-10
+        print('xInterval', xInterval)
+        for (index, item) in enumerate(xCoord):  # find the index of this point to find the corresponding y_coordinate
+            if item == min(xCoord):
+                xIndices.append(index)
+
+        xMax = max(xCoord)
+        yMin = min(yCoord)
+        yMax = max(yCoord)
+        print(yMax)
+        print(xCoord)
+        print(yCoord)
+        if yCoord[xIndices[
+            0]] - 10 > yMin:  # because we want the point with smallest x and y, we should check if y is also the smallest
+            yInterval = [yMin - 1, yCoord[xIndices[0]] + 10]
+        else:
+            yInterval = [yCoord[xIndices[0]] - 10, yCoord[xIndices[0]] + 10]
+
+        orgYInterval = yInterval
+        listLength = len(xCoord)
+        counter = 0
+        while yInterval[1] <= yMax + 10 and xInterval[1] <= xMax + 10: # loop interval in y direction
+            for (index, item) in enumerate((xCoord)):  # we find all points that are in this interval
+                counter = counter + 1
+                if item <= xInterval[1] and item >= xInterval[0]:  #find x and indices of x in interval
+                    xIndices_interval.append(index)
+                    if yCoord[index] <= yInterval[1] and yCoord[index] >= yInterval[0]:  #find y with indices of x
+                        intervalPointList.append([item, yCoord[index]])  #find coordination of point in interval
+                        point = [item, yCoord[index]]
+                        angle.append(self.get_angle([xInterval[0], yInterval[0]], point)) #calculate angle of all points in interval to the first x,y of interval
+                        print('point', point)
+                        print('x interval', xInterval)
+                        print('y Interval', yInterval)
+                        print('origin', [xInterval[0], yInterval[0]])
+                        print('angle', angle)
+                if listLength == counter:   #when the y interval is over, window should go in x direction and then again in y direction, to find the new points
+                    yInterval = [yInterval[1], yInterval[1]+20]
+                    angle = []
+                    counter = 0
+            if not (yInterval[1] <= yMax +10 ):
+                xInterval = [xInterval[1], xInterval[1] + 20]
+                yInterval = orgYInterval
+
+
+
+    Point = namedtuple("Point", ["x", "y"])
+
+    def get_angle(self, p1: Point, p2: Point) -> float:
+        """Get the angle of this line with the horizontal axis."""
+
+        dx = p2[0] - p1[0]
+        dy = p2[1] - p1[1]
+        theta = math.atan2(dy, dx)
+        angle = math.degrees(theta)  # angle is in (-180, 180]
+        if angle < 0:
+            angle = 360 + angle
+
+        if angle < 45:  #finds the largest angle
+            angle = 90 - angle
+        return angle
 
 
 if __name__ == '__main__':
-
     dir = rospkg.RosPack().get_path('arena-tools')
     # reading in user data
     parser = ArgumentParser()
@@ -386,23 +334,19 @@ if __name__ == '__main__':
     img_origin, img, map_info = Complexity().extract_data(args.image_path, args.yaml_path)
     data = {}
 
+    Complexity().no_obstacles()
     # calculating metrics
-    Complexity().obst_detection(img_origin, file_name)
-   # Complexity().distance(img_origin)
     data["Entropy"], data["MaxEntropy"] = Complexity().entropy(img)
 
     data['MapSize'] = Complexity().determine_map_size(img, map_info)
     data["OccupancyRatio"] = Complexity().occupancy_ratio(img)
     data["NumObs"] = Complexity().number_of_static_obs(img)
-    data["MinObsDis"] = Complexity().distance_between_obs()
-    data["Entropy"], data["MaxEntropy"] = Complexity().entropy(img)
 
     # dump results
     Complexity().save_information(data, args.dest_path)
 
     print(data)
-
+#todo: die angle liste soll man trennen, weil gerade in einer liste gespeichert werden und ich weiß nicht,
+# welche in welche
 # NOTE: for our complexity measure we make some assumptions
 # 1. We ignore the occupancy threshold. Every pixel > 0 is considert to be fully populated even though this is not entirely accurate since might also only partially be populated (we therefore slightly overestimate populacy.)
-
-
