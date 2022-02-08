@@ -1,24 +1,10 @@
-Entropy: -0.0
-MapSize:
-- 20.0
-- 20.400000000000002
+AngleInfo:
+  adjusted_mean: 0.18247720293358685
+  mean: 351.6279069767442
+  variance: 1926.9689655683746
+Entropy: 0.3084169970197497
+MapSize: 4000.0
 MaxEntropy: 2.321928094887362
-MinObsDis: !!python/object/apply:numpy.core.multiarray.scalar
-- !!python/object/apply:numpy.dtype
-  args:
-  - f8
-  - false
-  - true
-  state: !!python/tuple
-  - 3
-  - <
-  - null
-  - null
-  - null
-  - -1
-  - -1
-  - 0
-- !!binary |
-  5jEZ3pySEUA=
-NumObs: 4
-OccupancyRatio: 0.11607843137254903
+MinObsDis: 0.223606797749979
+NumObs: 41
+OccupancyRatio: 0.036775

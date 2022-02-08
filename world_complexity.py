@@ -193,14 +193,16 @@ class Complexity:
                     min_obs_dist = min_dist_between_pixel_arrays
 
         print(min_obs_dist)
-        return(min_obs_dist*map_info['resolution'])
 
-    def no_obstacles(self):
+        return float(min_obs_dist * map_info['resolution'])
+
+    def no_obstacles(self, path):
+        """ finds all obstacles and determines there center
+        """
         areaList = []
         xcoordinate_center = []
         ycoordinate_center = []
-        image = cv2.imread(
-            '/home/oem/catkin_ws/src/forks/arena-tools/aws_house/small_warehouse.pgm')
+        image = cv2.imread(path)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         (thresh, blackAndWhiteImage) = cv2.threshold(gray, 127, 255,
                                                      cv2.THRESH_BINARY)
@@ -212,48 +214,54 @@ class Complexity:
             dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         cv2.drawContours(rgb, cnt, -1, (0, 255, 0), 2)
-        cv2.imshow('map5', rgb)
+        # cv2.imshow('map5', rgb)
         print("No of circles: ", len(cnt))
         for c in cnt:
             if cv2.contourArea(c) > 1:
                 area = int(cv2.contourArea(c))
                 areaList.append(area)
-                length = int(cv2.arcLength(c, True))-1)
-                M=cv2.moments(c)
-                xcoord=int(M['m10'] / M['m00'])
-                ycoord=int(M['m01'] / M['m00'])
+                length = int(cv2.arcLength(c, True))
+                M = cv2.moments(c)
+                xcoord = int(M['m10'] / M['m00'])
+                ycoord = int(M['m01'] / M['m00'])
                 xcoordinate_center.append(xcoord)
                 ycoordinate_center.append(ycoord)
-                coordList=[area, length, xcoord, ycoord]
+                coordList = [area, length, xcoord, ycoord]
         self.world_angles(xcoordinate_center, ycoordinate_center)
 
-        fig=plt.figure()
-        ax=fig.add_subplot(1, 1, 1)
-        ax.xaxis.set_ticks_position('top')
-        ax.yaxis.grid(linestyle = '-', color = 'gray')
-        ax.invert_yaxis()
-        ax.plot(xcoordinate_center, ycoordinate_center, 'ro', linewidth = 1.5)
-        # V this adds the lines V
-        for x, y in zip(xcoordinate_center, ycoordinate_center):
-            plt.plot([0, x], [0, y], color = "blue")
-            # ^ this adds the lines ^
-            plt.plot(x, y, 0, 0, linestyle = '--')
+        # fig=plt.figure()
+        # ax=fig.add_subplot(1, 1, 1)
+        # ax.xaxis.set_ticks_position('top')
+        # ax.yaxis.grid(linestyle = '-', color = 'gray')
+        # ax.invert_yaxis()
+        # ax.plot(xcoordinate_center, ycoordinate_center, 'ro', linewidth = 1.5)
+        # # V this adds the lines V
+        # for x, y in zip(xcoordinate_center, ycoordinate_center):
+        #     plt.plot([0, x], [0, y], color = "blue")
+        #     # ^ this adds the lines ^
+        #     plt.plot(x, y, 0, 0, linestyle = '--')
 
-        plt.show()
+        # plt.show()
         cv2.waitKey(10000)
-
+        print(f'OBS nr: {len(xcoordinate_center)} \n xcoordinate_center {xcoordinate_center} \n ycoordinate_center: {ycoordinate_center}')
         return xcoordinate_center, ycoordinate_center
 
-    def world_angles(self, xCoord, yCoord):
+    def world_angles(self, xCoord:list, yCoord:list):
+        """ calculates the angels between the obstacles in each window
+        args:
+            xCoord: x-coordinate of the center of each obs
+            yCoord: y-coordinate of the center of each obs
+        """
 
-        xIndices=[]
-        xIndices_interval=[]
-        intervalPointList=[]
-        angle=[]
-        subAngleList=[]
-        xInterval=[min(xCoord) - 10,
+        xIndices = []
+        xIndices_interval = []
+        intervalPointList = []
+        angle = []
+        subAngleList = []
+
+        xInterval = [min(xCoord) - 10,
                      min(xCoord) + 10]  # finds the smallest x_coordination and forms an interval with +-10
-        print('xInterval', xInterval)
+        # print('xInterval', xInterval)
         # find the index of this point to find the corresponding y_coordinate
         for (index, item) in enumerate(xCoord):
             if item == min(xCoord):
@@ -262,11 +270,13 @@ class Complexity:
         xMax = max(xCoord)
         yMin = min(yCoord)
         yMax = max(yCoord)
-        print(yMax)
-        print(xCoord)
-        print(yCoord)
+        # print(yMax)
+        # print(xCoord)
+        # print(yCoord)
+
+        # because we want the point with smallest x and y, we should check if y is also the smallest
         if yCoord[xIndices[
-                0]] - 10 > yMin:  # because we want the point with smallest x and y, we should check if y is also the smallest
+                0]] - 10 > yMin:
             yInterval = [yMin - 1, yCoord[xIndices[0]] + 10]
         else:
             yInterval = [yCoord[xIndices[0]] - 10, yCoord[xIndices[0]] + 10]
@@ -274,10 +284,12 @@ class Complexity:
         orgYInterval = yInterval
         listLength = len(xCoord)
         counter = 0
+
         # loop interval in y direction
         while yInterval[1] <= yMax + 10 and xInterval[1] <= xMax + 10:
             for (index, item) in enumerate((xCoord)):  # we find all points that are in this interval
-                counter = counter + 1
+                counter += 1
+
                 # find x and indices of x in interval
                 if item <= xInterval[1] and item >= xInterval[0]:
                     xIndices_interval.append(index)
@@ -292,12 +304,13 @@ class Complexity:
                         angle.append(self.get_angle(
                             [xInterval[0] + xCenter, yInterval[0] + yCenter], point))
                       #  angle.append(self.get_angle([xInterval[0] + xCenter, yInterval[0] + yCenter], point))
-                        print('point', point)
-                        print('x interval', xInterval)
-                        print('y Interval', yInterval)
-                        print('center of Interval, ', [
-                              xInterval[0] + xCenter, yInterval[0] + yCenter])
-                        print('angles to x-axis', angle)
+                        # print('point', point)
+                        # print('x interval', xInterval)
+                        # print('y Interval', yInterval)
+                        # print('center of Interval, ', [
+                            #   xInterval[0] + xCenter, yInterval[0] + yCenter])
+                        # print('angles to x-axis', angle)
+
                 if listLength == counter:  # when the y interval is over, window should go in x direction and then again in y direction, to find the new points
                     yInterval = [yInterval[1], yInterval[1]+10]
                     sortedAngle = sorted(angle)
@@ -308,10 +321,14 @@ class Complexity:
                     sumAngles = sum(subAngleList)
                     lastAngle = 360 - sumAngles
                     subAngleList.append(lastAngle)
-                    print('angles between every obstacle', subAngleList)
+                    # print('angles between every obstacle', subAngleList)
+                    global list_of_all_angles
+                    # list_of_all_angles.append([len(subAngleList)])
+                    list_of_all_angles.append(subAngleList)
                     subAngleList = []
                     angle = []
                     counter = 0
+
             if not (yInterval[1] <= yMax + 10):
                 xInterval = [xInterval[1], xInterval[1] + 10]
                 yInterval = orgYInterval
@@ -330,6 +347,18 @@ class Complexity:
 
         return angle
 
+    def processing_angle_information(self):
+        """Evaluates the angle information of the obstacles, by taking in a list of all angles as input
+        """
+        global list_of_all_angles
+        angle_data = {}
+        nr_windows = len(list_of_all_angles)
+        list_of_all_angles = [item for sublist in list_of_all_angles for item in sublist] # flatten the list
+        angle_data['mean'] = float(np.mean(list_of_all_angles))
+        angle_data['variance'] = float(np.var(list_of_all_angles))
+        angle_data['adjusted_mean'] = float(angle_data['mean'] / angle_data['variance'])
+
+        return angle_data
 
     def save_information(self, data: dict, dest: str):
         """To save the evaluated metrics
@@ -338,7 +367,7 @@ class Complexity:
             dest: path were the data should be saved
         """
         os.chdir(dest)
-        with open('complexity.yaml', 'w') as outfile:
+        with open('complexity.yaml', 'w+') as outfile:
             yaml.dump(data, outfile, default_flow_style=False)
 
 
@@ -347,30 +376,34 @@ if __name__ == '__main__':
     # reading in user data
     parser = ArgumentParser()
     parser.add_argument("--image_path", action="store", dest="image_path", default=f"{dir}/aws_house/map.pgm",
-                        help = "path to the floor plan of your world. Usually in .pgm format",
-                        required = False)
-    parser.add_argument("--yaml_path", action = "store", dest = "yaml_path", default = f"{dir}/aws_house/map.yaml",
-                        help = "path to the .yaml description file of your floor plan",
-                        required = False)
-    parser.add_argument("--dest_path", action = "store", dest = "dest_path", default = f"{dir}/aws_house",
-                        help = "location to store the complexity data about your map",
-                        required = False)
-    args=parser.parse_args()
-    converted_dict=vars(args)
-    file_name=Path(converted_dict['image_path']).stem
+                        help="path to the floor plan of your world. Usually in .pgm format",
+                        required=False)
+    parser.add_argument("--yaml_path", action="store", dest="yaml_path", default=f"{dir}/aws_house/map.yaml",
+                        help="path to the .yaml description file of your floor plan",
+                        required=False)
+    parser.add_argument("--dest_path", action="store", dest="dest_path", default=f"{dir}/aws_house",
+                        help="location to store the complexity data about your map",
+                        required=False)
+    args = parser.parse_args()
+    converted_dict = vars(args)
+    file_name = Path(converted_dict['image_path']).stem
 
     # extract data
-    img_origin, img, map_info=Complexity().extract_data(
+    img_origin, img, map_info = Complexity().extract_data(
         args.image_path, args.yaml_path)
-    data={}
 
-    Complexity().no_obstacles()
+    data = {}
+    list_of_all_angles = []
+    Complexity().no_obstacles(args.image_path)
+
     # calculating metrics
-    data["Entropy"], data["MaxEntropy"]=Complexity().entropy(img)
-    data['MapSize']=Complexity().determine_map_size(img, map_info)
-    data["OccupancyRatio"]=Complexity().occupancy_ratio(img)
-    data["NumObs"]=Complexity().number_of_static_obs(img)
-    data["MinObsDis"]=Complexity().distance_between_obs()
+    data["Entropy"], data["MaxEntropy"] = Complexity().entropy(img)
+    data['MapSize'] = Complexity().determine_map_size(img, map_info)
+    data["OccupancyRatio"] = Complexity().occupancy_ratio(img)
+    data["NumObs"] = Complexity().number_of_static_obs(img)
+    data["MinObsDis"] = Complexity().distance_between_obs()
+    data["AngleInfo"] = Complexity().processing_angle_information()
+
 
     # dump results
     Complexity().save_information(data, args.dest_path)
