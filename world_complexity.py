@@ -45,6 +45,15 @@ class Complexity:
         with open(yaml_path, 'r') as stream:
             map_info = yaml.safe_load(stream)
 
+        # this only selects interior area
+        t = np.where(img == 0.0)
+        x_low_lim = min(t[0])
+        x_high_lim = max(t[0])
+        y_low_lim = min(t[1])
+        y_high_lim = max(t[1])
+        test = img[x_low_lim:x_high_lim,y_low_lim:y_high_lim]
+        cv2.imshow('test',test)
+        cv2.waitKey(0)
         return img_origin, img, map_info
 
     def determine_map_size(self, img: list, map_info: dict):
@@ -187,8 +196,9 @@ class Complexity:
                 # this checks the distance between the pixels of the obstacles, and only selects the min distance between the pixels
                 dist_between_pixel_arrays = do_kdtree(
                     np.array(coordinates_other), np.array(coordinates))
-                min_dist_between_pixel_arrays = min(
-                    dist_between_pixel_arrays[dist_between_pixel_arrays > min_walkway_size])
+                filtered_pix = dist_between_pixel_arrays[dist_between_pixel_arrays > min_walkway_size]
+                if len(filtered_pix) > 0:
+                    min_dist_between_pixel_arrays = min(filtered_pix)
                 if min_obs_dist > min_dist_between_pixel_arrays:
                     min_obs_dist = min_dist_between_pixel_arrays
 
@@ -356,7 +366,8 @@ class Complexity:
         list_of_all_angles = [item for sublist in list_of_all_angles for item in sublist] # flatten the list
         angle_data['mean'] = float(np.mean(list_of_all_angles))
         angle_data['variance'] = float(np.var(list_of_all_angles))
-        angle_data['adjusted_mean'] = float(angle_data['mean'] / angle_data['variance'])
+        if 0 not in [angle_data['mean'], angle_data['variance']]:
+            angle_data['adjusted_mean'] = float(angle_data['mean'] / angle_data['variance'])
 
         return angle_data
 
@@ -367,7 +378,7 @@ class Complexity:
             dest: path were the data should be saved
         """
         os.chdir(dest)
-        with open('complexity.yaml', 'w+') as outfile:
+        with open(f'complexity.yaml', 'w+') as outfile:
             yaml.dump(data, outfile, default_flow_style=False)
 
 
@@ -375,10 +386,16 @@ if __name__ == '__main__':
     dir = rospkg.RosPack().get_path('arena-tools')
     # reading in user data
     parser = ArgumentParser()
-    parser.add_argument("--image_path", action="store", dest="image_path", default=f"{dir}/aws_house/map.pgm",
+    # parser.add_argument("--image_path", action="store", dest="image_path", default=f"{dir}/aws_house/map.pgm",
+    #                     help="path to the floor plan of your world. Usually in .pgm format",
+    #                     required=False)
+    # parser.add_argument("--yaml_path", action="store", dest="yaml_path", default=f"{dir}/aws_house/map.yaml",
+    #                     help="path to the .yaml description file of your floor plan",
+    #                     required=False)
+    parser.add_argument("--image_path", action="store", dest="image_path", default=f"/home/elias/catkin_ws/src/arena-rosnav-3D/simulator_setup/maps/hospital/map.pgm",
                         help="path to the floor plan of your world. Usually in .pgm format",
                         required=False)
-    parser.add_argument("--yaml_path", action="store", dest="yaml_path", default=f"{dir}/aws_house/map.yaml",
+    parser.add_argument("--yaml_path", action="store", dest="yaml_path", default=f"/home/elias/catkin_ws/src/arena-rosnav-3D/simulator_setup/maps/hospital/map.yaml",
                         help="path to the .yaml description file of your floor plan",
                         required=False)
     parser.add_argument("--dest_path", action="store", dest="dest_path", default=f"{dir}/aws_house",

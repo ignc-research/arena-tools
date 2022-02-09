@@ -150,3 +150,16 @@ Click on the 'edit'-Button of the Body you want to edit. The Flatland Body Edito
 ### Circle Footprints
 Not yet implemented.
 
+# Mesure complexity of you map
+1. run: `roscd arena-tools`
+2. run: `python world_complexity.py --image_path {IMAGE_PATH} --yaml_path {YAML_PATH} --dest_path {DEST_PATH}`
+
+with:\
+ IMAGE_PATH: path to the floor plan of your world. Usually in .pgm format\
+ YAML_PATH: path to the .yaml description file of your floor plan\
+ DEST_PATH: location to store the complexity data about your map
+
+Example launch:
+```bash
+python world_complexity.py --image_path ~/catkin_ws/src/forks/arena-tools/aws_house/map.pgm --yaml_path ~/catkin_ws/src/forks/arena-tools/aws_house/map.yaml --dest_path ~/catkin_ws/src/forks/arena-tools/aws_house
+```
