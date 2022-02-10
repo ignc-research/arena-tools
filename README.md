@@ -64,6 +64,29 @@ Now all of the maps can be used in Gazebo, have a look at [arena-rosnav-3D](http
 >- For now maps can only be converted in bulk, that is all of the **arena_tools** generated maps found in the setup folder will be converted at once.
 >- If you wish to convert a single map or be able to specify the conversion parameters, use textures refer to [LIRS_World_Construction_Tool](https://gitlab.com/LIRS_Projects/LIRS-WCT).
 
+3. To use the worlds with the arena-rosnav-3d repository, there are additional two steps you need to take: 
+
+    __a)__ Navigate to the newly created world file under: `arena-rosnav-3D/simulator_setup/worlds/{NAME_OF_YOUR_MAP}/worlds/{NAME_OF_YOUR_MAP}.world`\
+    __b)__ add the following line somewhere between your xml world tags `<world>`:
+    ```xml
+        <include>
+            <uri>model://ground_plane</uri>
+        </include>
+    ``` 
+    like so:
+    ```xml
+    <sdf version="1.4">
+    <world name="default">
+        <include>
+            <uri>model://ground_plane</uri>
+        </include>
+    ```
+    __c)__ Replace the line: ``<pose frame=''>0 0 0 0 0 0</pose>`` by `<pose frame=''>0 0 -1 0 0 0</pose>`
+
+Now you should be able to use the world. It is also advisable to use arena-tools to create scenarios for these worlds. This process will be described in the following section.
+
+
+
 # Scenario Editor
 ![](img/scenario_editor.png)
 Scenario Editor is a tool to create scenarios for use in Arena-Rosnav. Run it using Python:

@@ -51,9 +51,10 @@ class Complexity:
         x_high_lim = max(t[0])
         y_low_lim = min(t[1])
         y_high_lim = max(t[1])
+        print(x_low_lim, x_high_lim)
         test = img[x_low_lim:x_high_lim,y_low_lim:y_high_lim]
-        cv2.imshow('test',test)
-        cv2.waitKey(0)
+        # cv2.imshow('test',test)
+        # cv2.waitKey(0)
         return img_origin, img, map_info
 
     def determine_map_size(self, img: list, map_info: dict):
@@ -392,10 +393,10 @@ if __name__ == '__main__':
     # parser.add_argument("--yaml_path", action="store", dest="yaml_path", default=f"{dir}/aws_house/map.yaml",
     #                     help="path to the .yaml description file of your floor plan",
     #                     required=False)
-    parser.add_argument("--image_path", action="store", dest="image_path", default=f"/home/elias/catkin_ws/src/arena-rosnav-3D/simulator_setup/maps/hospital/map.pgm",
+    parser.add_argument("--image_path", action="store", dest="image_path", default=f"/home/elias/catkin_ws/src/arena-rosnav-3D/simulator_setup/maps/ignc/map.pgm",
                         help="path to the floor plan of your world. Usually in .pgm format",
                         required=False)
-    parser.add_argument("--yaml_path", action="store", dest="yaml_path", default=f"/home/elias/catkin_ws/src/arena-rosnav-3D/simulator_setup/maps/hospital/map.yaml",
+    parser.add_argument("--yaml_path", action="store", dest="yaml_path", default=f"/home/elias/catkin_ws/src/arena-rosnav-3D/simulator_setup/maps/ignc/map.yaml",
                         help="path to the .yaml description file of your floor plan",
                         required=False)
     parser.add_argument("--dest_path", action="store", dest="dest_path", default=f"{dir}/aws_house",
