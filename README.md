@@ -81,7 +81,7 @@ Now all of the maps can be used in Gazebo, have a look at [arena-rosnav-3D](http
             <uri>model://ground_plane</uri>
         </include>
     ```
-    __c)__ Replace the line: ``<pose frame=''>0 0 0 0 0 0</pose>`` by `<pose frame=''>0 0 -1 0 0 0</pose>`
+    __c)__ Replace the line: ``<pose frame=''>0 0 0 0 0 0</pose>`` by `<pose frame=''>0 0 -1 0 0 0</pose>`\
     __d)__ Replace the absolute map paths: e.g: `file:///home/usr/catkin_ws/src/arena-rosnav-3D/simulator_setup/worlds/map5/worlds` with `/` so that the lines say:
     ```xml
     <uri>//map2.dae</uri>
