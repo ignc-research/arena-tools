@@ -11,7 +11,7 @@ A collection of tools to make working with [Arena-Rosnav-3D](https://github.com/
 ## Installation
 Install Python packages (preferably in your virtual environment):
 ```bash
-pip3 install pyqt5 numpy pyyaml lxml scikit-image Pillow scikit-image
+pip3 install pyqt5 numpy pyyaml lxml scikit-image Pillow scikit-image opencv-python matplotlib
 pip install PyQt5 --upgrade
 ```
 
@@ -63,6 +63,44 @@ Now all of the maps can be used in Gazebo, have a look at [arena-rosnav-3D](http
 >**NOTE**
 >- For now maps can only be converted in bulk, that is all of the **arena_tools** generated maps found in the setup folder will be converted at once.
 >- If you wish to convert a single map or be able to specify the conversion parameters, use textures refer to [LIRS_World_Construction_Tool](https://gitlab.com/LIRS_Projects/LIRS-WCT).
+
+3. To use the worlds with the arena-rosnav-3d repository, there are additional steps you need to take: 
+
+    __a)__ Navigate to the newly created world file under: `arena-rosnav-3D/simulator_setup/worlds/{NAME_OF_YOUR_MAP}/worlds/{NAME_OF_YOUR_MAP}.world`\
+    __b)__ add the following line somewhere between your xml world tags `<world>`:
+    ```xml
+        <include>
+            <uri>model://ground_plane</uri>
+        </include>
+    ``` 
+    like so:
+    ```xml
+    <sdf version="1.4">
+    <world name="default">
+        <include>
+            <uri>model://ground_plane</uri>
+        </include>
+    ```
+    __c)__ Replace the line: ``<pose frame="">-12.5 -12.5 -1 0 0 0</pose>`` by `<pose frame="">-12.5 -12.5 -1 0 0 0</pose>`\
+    __d)__ Replace the absolute map paths: e.g: `file:///home/usr/catkin_ws/src/arena-rosnav-3D/simulator_setup/worlds/map5/worlds` with `/` so that the lines say:
+    ```xml
+    <uri>//map2.dae</uri>
+    ```
+    __e)__ Add the pose correction to the collision model. Add the following section:
+    ```xml
+        <collision name="collision1">
+            <geometry>
+    ```
+    By adding the corrected pose, like so:
+    ```xml
+        <collision name="collision1">
+            <pose frame="">-12.5 -12.5 -1 0 0 0</pose>
+            <geometry>
+    ```
+
+Now you should be able to use the world. It is also advisable to use arena-tools to create scenarios for these worlds. This process will be described in the following section.
+
+
 
 # Scenario Editor
 ![](img/scenario_editor.png)
@@ -150,3 +188,16 @@ Click on the 'edit'-Button of the Body you want to edit. The Flatland Body Edito
 ### Circle Footprints
 Not yet implemented.
 
+# Mesure complexity of you map
+1. run: `roscd arena-tools`
+2. run: `python world_complexity.py --image_path {IMAGE_PATH} --yaml_path {YAML_PATH} --dest_path {DEST_PATH}`
+
+with:\
+ IMAGE_PATH: path to the floor plan of your world. Usually in .pgm format\
+ YAML_PATH: path to the .yaml description file of your floor plan\
+ DEST_PATH: location to store the complexity data about your map
+
+Example launch:
+```bash
+python world_complexity.py --image_path ~/catkin_ws/src/forks/arena-tools/aws_house/map.pgm --yaml_path ~/catkin_ws/src/forks/arena-tools/aws_house/map.yaml --dest_path ~/catkin_ws/src/forks/arena-tools/aws_house
+```

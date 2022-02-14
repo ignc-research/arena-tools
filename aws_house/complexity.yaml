@@ -1,0 +1,10 @@
+AngleInfo:
+  adjusted_mean: 0.008408623077504876
+  mean: 180.0
+  variance: 21406.596340552358
+Entropy: 0.14598134481172925
+MapSize: 4840.0
+MaxEntropy: 2.321928094887362
+MinObsDis: 1000.0
+NumObs: 1
+OccupancyRatio: 0.015743801652892575
