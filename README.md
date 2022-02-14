@@ -81,10 +81,21 @@ Now all of the maps can be used in Gazebo, have a look at [arena-rosnav-3D](http
             <uri>model://ground_plane</uri>
         </include>
     ```
-    __c)__ Replace the line: ``<pose frame=''>0 0 0 0 0 0</pose>`` by `<pose frame=''>0 0 -1 0 0 0</pose>`\
+    __c)__ Replace the line: ``<pose frame="">-12.5 -12.5 -1 0 0 0</pose>`` by `<pose frame="">-12.5 -12.5 -1 0 0 0</pose>`\
     __d)__ Replace the absolute map paths: e.g: `file:///home/usr/catkin_ws/src/arena-rosnav-3D/simulator_setup/worlds/map5/worlds` with `/` so that the lines say:
     ```xml
     <uri>//map2.dae</uri>
+    ```
+    __e)__ Add the pose correction to the collision model. Add the following section:
+    ```xml
+        <collision name="collision1">
+            <geometry>
+    ```
+    By adding the corrected pose, like so:
+    ```xml
+        <collision name="collision1">
+            <pose frame="">-12.5 -12.5 -1 0 0 0</pose>
+            <geometry>
     ```
 
 Now you should be able to use the world. It is also advisable to use arena-tools to create scenarios for these worlds. This process will be described in the following section.
