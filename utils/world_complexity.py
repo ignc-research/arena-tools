@@ -1,5 +1,3 @@
-import imutils
-import csv
 import math
 import cv2
 import sys
@@ -16,7 +14,6 @@ from collections import namedtuple
 from unittest import skip
 
 # TODO s
-# - identify interior area @Elias
 # - die angle liste soll man trennen, weil gerade in einer liste gespeichert werden und ich weiß nicht, welche in welche
 
 # see comments at the end of the document
@@ -52,7 +49,7 @@ class Complexity:
         y_low_lim = min(t[1])
         y_high_lim = max(t[1])
         print(x_low_lim, x_high_lim)
-        test = img[x_low_lim:x_high_lim,y_low_lim:y_high_lim]
+        test = img[x_low_lim:x_high_lim, y_low_lim:y_high_lim]
         # cv2.imshow('test',test)
         # cv2.waitKey(0)
         return img_origin, img, map_info
@@ -197,7 +194,8 @@ class Complexity:
                 # this checks the distance between the pixels of the obstacles, and only selects the min distance between the pixels
                 dist_between_pixel_arrays = do_kdtree(
                     np.array(coordinates_other), np.array(coordinates))
-                filtered_pix = dist_between_pixel_arrays[dist_between_pixel_arrays > min_walkway_size]
+                filtered_pix = dist_between_pixel_arrays[dist_between_pixel_arrays >
+                                                         min_walkway_size]
                 if len(filtered_pix) > 0:
                     min_dist_between_pixel_arrays = min(filtered_pix)
                 if min_obs_dist > min_dist_between_pixel_arrays:
@@ -254,10 +252,11 @@ class Complexity:
 
         # plt.show()
         cv2.waitKey(10000)
-        print(f'OBS nr: {len(xcoordinate_center)} \n xcoordinate_center {xcoordinate_center} \n ycoordinate_center: {ycoordinate_center}')
+        print(
+            f'OBS nr: {len(xcoordinate_center)} \n xcoordinate_center {xcoordinate_center} \n ycoordinate_center: {ycoordinate_center}')
         return xcoordinate_center, ycoordinate_center
 
-    def world_angles(self, xCoord:list, yCoord:list):
+    def world_angles(self, xCoord: list, yCoord: list):
         """ calculates the angels between the obstacles in each window
         args:
             xCoord: x-coordinate of the center of each obs
@@ -319,7 +318,7 @@ class Complexity:
                         # print('x interval', xInterval)
                         # print('y Interval', yInterval)
                         # print('center of Interval, ', [
-                            #   xInterval[0] + xCenter, yInterval[0] + yCenter])
+                        #   xInterval[0] + xCenter, yInterval[0] + yCenter])
                         # print('angles to x-axis', angle)
 
                 if listLength == counter:  # when the y interval is over, window should go in x direction and then again in y direction, to find the new points
@@ -364,11 +363,13 @@ class Complexity:
         global list_of_all_angles
         angle_data = {}
         nr_windows = len(list_of_all_angles)
-        list_of_all_angles = [item for sublist in list_of_all_angles for item in sublist] # flatten the list
+        list_of_all_angles = [
+            item for sublist in list_of_all_angles for item in sublist]  # flatten the list
         angle_data['mean'] = float(np.mean(list_of_all_angles))
         angle_data['variance'] = float(np.var(list_of_all_angles))
         if 0 not in [angle_data['mean'], angle_data['variance']]:
-            angle_data['adjusted_mean'] = float(angle_data['mean'] / angle_data['variance'])
+            angle_data['adjusted_mean'] = float(
+                angle_data['mean'] / angle_data['variance'])
 
         return angle_data
 
@@ -385,14 +386,9 @@ class Complexity:
 
 if __name__ == '__main__':
     dir = rospkg.RosPack().get_path('arena-tools')
+    
     # reading in user data
     parser = ArgumentParser()
-    # parser.add_argument("--image_path", action="store", dest="image_path", default=f"{dir}/aws_house/map.pgm",
-    #                     help="path to the floor plan of your world. Usually in .pgm format",
-    #                     required=False)
-    # parser.add_argument("--yaml_path", action="store", dest="yaml_path", default=f"{dir}/aws_house/map.yaml",
-    #                     help="path to the .yaml description file of your floor plan",
-    #                     required=False)
     parser.add_argument("--image_path", action="store", dest="image_path", default=f"/home/elias/catkin_ws/src/arena-rosnav-3D/simulator_setup/maps/ignc/map.pgm",
                         help="path to the floor plan of your world. Usually in .pgm format",
                         required=False)
@@ -421,7 +417,6 @@ if __name__ == '__main__':
     data["NumObs"] = Complexity().number_of_static_obs(img)
     data["MinObsDis"] = Complexity().distance_between_obs()
     data["AngleInfo"] = Complexity().processing_angle_information()
-
 
     # dump results
     Complexity().save_information(data, args.dest_path)
