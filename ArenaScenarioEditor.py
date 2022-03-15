@@ -587,6 +587,12 @@ class RobotAgentWidget(QtWidgets.QFrame):
         self.goalYSpinBox.valueChanged.connect(self.updateGraphicsItemsFromSpinBoxes)
         self.layout().addWidget(self.goalYSpinBox, 2, 2)
 
+        self.resetsSpinBox = QtWidgets.QSpinBox()
+        self.resetsSpinBox.setMinimum(0)
+        rst_label = QtWidgets.QLabel("Episode resets:")
+        self.layout().addWidget(rst_label, 3, 0, QtCore.Qt.AlignmentFlag.AlignLeft)
+        self.layout().addWidget(self.resetsSpinBox, 3, 1)
+
     def updateSpinBoxesFromGraphicsItems(self):
         # start
         new_pos = self.startGraphicsEllipseItem.mapToScene(self.startGraphicsEllipseItem.transformOriginPoint())
@@ -836,39 +842,39 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
                     widget.onAddWaypointClicked()
 
     def pasteElements(self):
-            # duplicate copied items
-            for item in self.copied:
-                widget = item.parentWidget
-                if isinstance(widget, PedsimAgentWidget):
-                    widget.save()
-                    agent = copy.deepcopy(widget.pedsimAgent)
-                    agent.name = self.generateName()
-                    # move agent and waypoints a bit
-                    agent.pos[0] += 1.0
-                    agent.pos[1] += 1.0
-                    for wp in agent.waypoints:
-                        wp[0] += 1.0
-                        wp[1] += 1.0
-                    new_widget = self.addPedsimAgentWidget(agent)
-                    # select new item and waypoints
-                    new_widget.graphicsPathItem.setSelected(True)
-                    for w in new_widget.getWaypointWidgets():
-                        w.ellipseItem.setSelected(True)
-                    # unselect old item and waypoints
-                    widget.graphicsPathItem.setSelected(False)
-                    for w in widget.getWaypointWidgets():
-                        w.ellipseItem.setSelected(False)
-                elif isinstance(widget, FlatlandObjectWidget):
-                    widget.save()
-                    obj = copy.deepcopy(widget.flatlandObject)
-                    obj.name = self.generateName()
-                    obj.pos[0] += 1.0
-                    obj.pos[1] += 1.0
-                    new_widget = self.addFlatlandObjectWidget(obj)
-                    # select new item
-                    new_widget.graphicsPathItem.setSelected(True)
-                    # unselect old item
-                    widget.graphicsPathItem.setSelected(False)
+        # duplicate copied items
+        for item in self.copied:
+            widget = item.parentWidget
+            if isinstance(widget, PedsimAgentWidget):
+                widget.save()
+                agent = copy.deepcopy(widget.pedsimAgent)
+                agent.name = self.generateName()
+                # move agent and waypoints a bit
+                agent.pos[0] += 1.0
+                agent.pos[1] += 1.0
+                for wp in agent.waypoints:
+                    wp[0] += 1.0
+                    wp[1] += 1.0
+                new_widget = self.addPedsimAgentWidget(agent)
+                # select new item and waypoints
+                new_widget.graphicsPathItem.setSelected(True)
+                for w in new_widget.getWaypointWidgets():
+                    w.ellipseItem.setSelected(True)
+                # unselect old item and waypoints
+                widget.graphicsPathItem.setSelected(False)
+                for w in widget.getWaypointWidgets():
+                    w.ellipseItem.setSelected(False)
+            elif isinstance(widget, FlatlandObjectWidget):
+                widget.save()
+                obj = copy.deepcopy(widget.flatlandObject)
+                obj.name = self.generateName()
+                obj.pos[0] += 1.0
+                obj.pos[1] += 1.0
+                new_widget = self.addFlatlandObjectWidget(obj)
+                # select new item
+                new_widget.graphicsPathItem.setSelected(True)
+                # unselect old item
+                widget.graphicsPathItem.setSelected(False)
 
     def onNewScenarioClicked(self):
         pass
@@ -942,6 +948,9 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
         # map
         self.setMap(self.arenaScenario.mapPath)
 
+        # resets
+        self.robotAgentWidget.resetsSpinBox.setValue(self.arenaScenario.resets)
+
     def updateArenaScenarioFromWidgets(self):
         '''
         Save data from widgets into self.arenaScenario.
@@ -975,7 +984,7 @@ class ArenaScenarioEditor(QtWidgets.QMainWindow):
 
         # interactive obstacles
         # TODO
-
+        self.arenaScenario.resets = self.robotAgentWidget.resetsSpinBox.value()
 
 
 if __name__ == "__main__":

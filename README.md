@@ -1,28 +1,47 @@
 # arena-tools
-A collection of tools to make working with [Arena-Rosnav](https://github.com/ignc-research/arena-rosnav/) easier. It currently includes:
+A collection of tools to make working with [Arena-Rosnav](https://github.com/ignc-research/arena-rosnav/) and [Arena-Rosnav-3D](https://github.com/ignc-research/arena-rosnav-3D/) easier. It currently includes:
 - Scenario Editor
-- Flatland Model Editor
-- Map Generator
+- Flatland Model Editor 
+- Map Generator (2D)
+- Complexity Metrics
 
 ## Prerequisites
 - Python 3.6 or higher
 
 ## Installation
-Install Python packages:
+Install Python packages (preferably in your virtual environment):
+```bash
+pip3 install pyqt5 numpy pyyaml lxml scikit-image Pillow scikit-image opencv-python matplotlib
+pip install PyQt5 --upgrade
 ```
-pip3 install pyqt5 numpy pyyaml
+# Run
+To start the gui and select your task, run:
+```bash
+roscd arena-tools && python arena_tools.py
 ```
-## Run
-```
-python arena_tools.py
-```
+## Map Generator
+How to create a custom map blueprint like shown here:
+
+
+https://user-images.githubusercontent.com/74921738/130034174-fa6b334b-e220-47ea-91ba-4bc815663ae5.mov
+
+
+
+1. Map Generator is a tool to generate random ROS maps. Firstly select map generator in the *arena-tools* menue. Or run `python MapGenerator.py`
+
+> **NOTE:**
+>- Maps can be either an indoor or an outdoor type map. For **indoor** maps you can adjust the **Corridor With** and number of **Iterations**. For **outdoor** maps you can adjust the number of **Obstacles** and the **Obstacle Extra Radius**.
+>- Generate maps in bulk by setting **Number of Maps**
+>- Each map will be saved in its own folder. Folders will be named like "map[number]". [number] will be incremented starting from the highest number that already exists in the folder, so as not to overwrite any existing maps.
+
+
 
 
 # Scenario Editor
 ![](img/scenario_editor.png)
 Scenario Editor is a tool to create scenarios for use in Arena-Rosnav. Run it using Python:
-```
-python ArenaScenarioEditor.py
+```bash
+roscd arena-tools && python ArenaScenarioEditor.py
 ```
 ## Example Usage
 
@@ -43,7 +62,7 @@ https://user-images.githubusercontent.com/74921738/127912004-4e97af74-b6b8-4501-
 Click on File->Open or File->Save. Scenarios can be saved in YAML or JSON format, just use the according file ending.
 
 ## Set Scenario Map
-Click on Elements->Set Map. Select a map.yaml file in the format of a typical ROS map (see [map_server Docs](http://wiki.ros.org/map_server#YAML_format)). The map will be loaded into the scene.
+Click on Elements->Set Map. Select a `map.yaml` file in the format of a typical ROS map (see [map_server Docs](http://wiki.ros.org/map_server#YAML_format)). The map will be loaded into the scene.
 
 ## Set Robot initial position and goal
 Robot position and goal is always part of a scenario.
@@ -76,8 +95,8 @@ https://user-images.githubusercontent.com/74921738/127176906-98ab58bb-9c40-4d56-
 ![](img/model_editor.png)
 
 Flatland Model Editor is a tool to create models used by Flatland. See the [Flatland Documentation](https://flatland-simulator.readthedocs.io/en/latest/core_functions/models.html) for a description of a model file. Run it using Python:
-```
-python FlatlandModelEditor.py
+```bash
+roscd arena-tools && python FlatlandModelEditor.py
 ```
 ## Load and Save Models
 Click on File->Open or File->Save.
@@ -102,18 +121,16 @@ Click on the 'edit'-Button of the Body you want to edit. The Flatland Body Edito
 ### Circle Footprints
 Not yet implemented.
 
-# Map Generator
+# Mesure complexity of you map
+1. run: `roscd arena-tools`
+2. run: `python world_complexity.py --image_path {IMAGE_PATH} --yaml_path {YAML_PATH} --dest_path {DEST_PATH}`
 
+with:\
+ IMAGE_PATH: path to the floor plan of your world. Usually in .pgm format\
+ YAML_PATH: path to the .yaml description file of your floor plan\
+ DEST_PATH: location to store the complexity data about your map
 
-https://user-images.githubusercontent.com/74921738/130034174-fa6b334b-e220-47ea-91ba-4bc815663ae5.mov
-
-
-
-Map Generator is a tool to generate random ROS maps. Run it using Python:
+Example launch:
+```bash
+python world_complexity.py --image_path ~/catkin_ws/src/forks/arena-tools/aws_house/map.pgm --yaml_path ~/catkin_ws/src/forks/arena-tools/aws_house/map.yaml --dest_path ~/catkin_ws/src/forks/arena-tools/aws_house
 ```
-python MapGenerator.py
-```
-## Notes
-- Maps can be either an indoor or an outdoor type map. For **indoor** maps you can adjust the **Corridor With** and number of **Iterations**. For **outdoor** maps you can adjust the number of **Obstacles** and the **Obstacle Extra Radius**.
-- Generate maps in bulk by setting **Number of Maps**
-- Each map will be saved in its own folder. Folders will be named like "map[number]". [number] will be incremented starting from the highest number that already exists in the folder, so as not to overwrite any existing maps.
