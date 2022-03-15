@@ -50,7 +50,7 @@ class PedsimAgent():
         if flatlandModelPath != "":
             self.loadFlatlandModel(flatlandModelPath)
         self.number_of_peds = 1
-        self.vmax = 0.3 
+        self.vmax = 1.0
 
         self.start_up_mode = "default"
         self.wait_time = 0.0

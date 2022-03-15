@@ -1,112 +1,27 @@
 # arena-tools
-A collection of tools to make working with [Arena-Rosnav-3D](https://github.com/ignc-research/arena-rosnav-3D/) easier. It currently includes:
+A collection of tools to make working with [Arena-Rosnav](https://github.com/ignc-research/arena-rosnav/) easier. It currently includes:
 - Scenario Editor
-- Flatland Model Editor 
-- Map Generator (2D)
-- Map to Gazebo world converter (3D)
+- Flatland Model Editor
+- Map Generator
 
 ## Prerequisites
 - Python 3.6 or higher
 
 ## Installation
-Install Python packages (preferably in your virtual environment):
-```bash
-pip3 install pyqt5 numpy pyyaml lxml scikit-image Pillow scikit-image opencv-python matplotlib
-pip install PyQt5 --upgrade
+Install Python packages:
 ```
-
-To enable compatibility with arena-rosnav-3d run:
-```bash
-roscd arena-tools
-git clone https://gitlab.com/LIRS_Projects/LIRS-WCT lirs-wct
-cd lirs-wct
-./deploy.sh
-roscd arena-tools
-mv lirs-wct/lirs_wct_console/build/lirs_wct_console .
+pip3 install pyqt5 numpy pyyaml
 ```
-<!-- For converting 2D maps to Gazebo worlds we are using [LIRS_WCT](https://gitlab.com/LIRS_Projects/LIRS-WCT). Please follow their [installation guide](https://gitlab.com/LIRS_Projects/LIRS-WCT#installation) and place the lirs_wct_console executable inside your arena-tools folder to use this functionality. -->
-# Run
-To start the gui and select your task, run:
-```bash
-roscd arena-tools
+## Run
+```
 python arena_tools.py
 ```
-## Map Generator
-How to create a custom map blueprint like shown here:
-
-
-https://user-images.githubusercontent.com/74921738/130034174-fa6b334b-e220-47ea-91ba-4bc815663ae5.mov
-
-
-
-1. Map Generator is a tool to generate random ROS maps. Firstly select map generator in the *arena-tools* menue. Or run `python MapGenerator.py`
-
-> **NOTE:**
->- Maps can be either an indoor or an outdoor type map. For **indoor** maps you can adjust the **Corridor With** and number of **Iterations**. For **outdoor** maps you can adjust the number of **Obstacles** and the **Obstacle Extra Radius**.
->- Generate maps in bulk by setting **Number of Maps**
->- Each map will be saved in its own folder. Folders will be named like "map[number]". [number] will be incremented starting from the highest number that already exists in the folder, so as not to overwrite any existing maps.
-
-2. To convert the 2D maps into 3D Gazebo worlds:
-![Screenshot from 2021-10-25 23-42-46](https://user-images.githubusercontent.com/41898845/138775328-6609cd98-cf5f-4942-aa3d-bcf9314a5714.png)
-Press the button **Convert existing maps into Gazebo worlds** and all of the maps in subfolder map_ will be automatically converted into Gazebo worlds, as well as their respective Pedsim scene obstacles file will be generated and placed under **simulator_setup/scenarios/ped_scenarios/map_{i}.xml**. 
-\
-When you see an output like the following in your terminal, the worlds have been successfully converted to Gazebo maps and you can close the map generator interface. 
-    ```txt
-    Loaded map in /home/usr/catkin_ws/src/arena-rosnav-3D/simulator_setup/maps/map4/map.yaml with metadata:
-    {'image': 'map4.png', 'resolution': 0.5, 'origin': [0.0, 0.0, 0.0], 'negate': 0, 'occupied_thresh': 0.65, 'free_thresh': 0.196}
-    Lossy conversion from int64 to uint8. Range [0, 255]. Convert image to uint8 prior to saving to suppress this warning.
-    Writing scene in /home/usr/catkin_ws/src/arena-rosnav-3D/simulator_setup/scenarios/ped_scenarios/map4.xml...
-    Done.
-    ```
-Now all of the maps can be used in Gazebo, have a look at [arena-rosnav-3D](https://github.com/ignc-research/arena-rosnav-3D/blob/main/docs/Usage.md) for more information.
-
->**NOTE**
->- For now maps can only be converted in bulk, that is all of the **arena_tools** generated maps found in the setup folder will be converted at once.
->- If you wish to convert a single map or be able to specify the conversion parameters, use textures refer to [LIRS_World_Construction_Tool](https://gitlab.com/LIRS_Projects/LIRS-WCT).
-
-3. To use the worlds with the arena-rosnav-3d repository, there are additional steps you need to take: 
-
-    __a)__ Navigate to the newly created world file under: `arena-rosnav-3D/simulator_setup/worlds/{NAME_OF_YOUR_MAP}/worlds/{NAME_OF_YOUR_MAP}.world`\
-    __b)__ add the following line somewhere between your xml world tags `<world>`:
-    ```xml
-        <include>
-            <uri>model://ground_plane</uri>
-        </include>
-    ``` 
-    like so:
-    ```xml
-    <sdf version="1.4">
-    <world name="default">
-        <include>
-            <uri>model://ground_plane</uri>
-        </include>
-    ```
-    __c)__ Replace the line: ``<pose frame="">-12.5 -12.5 -1 0 0 0</pose>`` by `<pose frame="">-12.5 -12.5 -1 0 0 0</pose>`\
-    __d)__ Replace the absolute map paths: e.g: `file:///home/usr/catkin_ws/src/arena-rosnav-3D/simulator_setup/worlds/map5/worlds` with `/` so that the lines say:
-    ```xml
-    <uri>//map2.dae</uri>
-    ```
-    __e)__ Add the pose correction to the collision model. Add the following section:
-    ```xml
-        <collision name="collision1">
-            <geometry>
-    ```
-    By adding the corrected pose, like so:
-    ```xml
-        <collision name="collision1">
-            <pose frame="">-12.5 -12.5 -1 0 0 0</pose>
-            <geometry>
-    ```
-
-Now you should be able to use the world. It is also advisable to use arena-tools to create scenarios for these worlds. This process will be described in the following section.
-
 
 
 # Scenario Editor
 ![](img/scenario_editor.png)
 Scenario Editor is a tool to create scenarios for use in Arena-Rosnav. Run it using Python:
-```bash
-roscd arena-tools
+```
 python ArenaScenarioEditor.py
 ```
 ## Example Usage
@@ -128,7 +43,7 @@ https://user-images.githubusercontent.com/74921738/127912004-4e97af74-b6b8-4501-
 Click on File->Open or File->Save. Scenarios can be saved in YAML or JSON format, just use the according file ending.
 
 ## Set Scenario Map
-Click on Elements->Set Map. Select a `map.yaml` file in the format of a typical ROS map (see [map_server Docs](http://wiki.ros.org/map_server#YAML_format)). The map will be loaded into the scene.
+Click on Elements->Set Map. Select a map.yaml file in the format of a typical ROS map (see [map_server Docs](http://wiki.ros.org/map_server#YAML_format)). The map will be loaded into the scene.
 
 ## Set Robot initial position and goal
 Robot position and goal is always part of a scenario.
@@ -161,8 +76,7 @@ https://user-images.githubusercontent.com/74921738/127176906-98ab58bb-9c40-4d56-
 ![](img/model_editor.png)
 
 Flatland Model Editor is a tool to create models used by Flatland. See the [Flatland Documentation](https://flatland-simulator.readthedocs.io/en/latest/core_functions/models.html) for a description of a model file. Run it using Python:
-```bash
-roscd arena-tools
+```
 python FlatlandModelEditor.py
 ```
 ## Load and Save Models
@@ -188,16 +102,18 @@ Click on the 'edit'-Button of the Body you want to edit. The Flatland Body Edito
 ### Circle Footprints
 Not yet implemented.
 
-# Mesure complexity of you map
-1. run: `roscd arena-tools`
-2. run: `python world_complexity.py --image_path {IMAGE_PATH} --yaml_path {YAML_PATH} --dest_path {DEST_PATH}`
+# Map Generator
 
-with:\
- IMAGE_PATH: path to the floor plan of your world. Usually in .pgm format\
- YAML_PATH: path to the .yaml description file of your floor plan\
- DEST_PATH: location to store the complexity data about your map
 
-Example launch:
-```bash
-python world_complexity.py --image_path ~/catkin_ws/src/forks/arena-tools/aws_house/map.pgm --yaml_path ~/catkin_ws/src/forks/arena-tools/aws_house/map.yaml --dest_path ~/catkin_ws/src/forks/arena-tools/aws_house
+https://user-images.githubusercontent.com/74921738/130034174-fa6b334b-e220-47ea-91ba-4bc815663ae5.mov
+
+
+
+Map Generator is a tool to generate random ROS maps. Run it using Python:
 ```
+python MapGenerator.py
+```
+## Notes
+- Maps can be either an indoor or an outdoor type map. For **indoor** maps you can adjust the **Corridor With** and number of **Iterations**. For **outdoor** maps you can adjust the number of **Obstacles** and the **Obstacle Extra Radius**.
+- Generate maps in bulk by setting **Number of Maps**
+- Each map will be saved in its own folder. Folders will be named like "map[number]". [number] will be incremented starting from the highest number that already exists in the folder, so as not to overwrite any existing maps.

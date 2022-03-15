@@ -43,7 +43,6 @@ class ArenaScenario:
             a) for a in d["pedsim_agents"]]
         self.staticObstacles = [FlatlandObject.fromDict(
             o) for o in d["static_obstacles"]]
-
         # self.interactiveObstacles = ...TODO
         self.robotPosition = np.array(
             [d["robot_position"][0], d["robot_position"][1]])
@@ -55,14 +54,12 @@ class ArenaScenario:
             self.resets = 0
 
     def saveToFile(self, path_in: str = "") -> bool:
-        """
+        '''
         Save Scenario in file.
         - path_in: path to save file
         - format: format of save file, can be "json" or "yaml"
-        """
-        if os.path.exists(
-            path_in
-        ):  # TODO is this not always false when it's a new filename?
+        '''
+        if os.path.exists(path_in):  # TODO is this not always false when it's a new filename?
             self.path = path_in
 
         if self.path == "":
@@ -79,7 +76,6 @@ class ArenaScenario:
                 raise Exception(
                     "wrong format. file needs to have 'json' or 'yaml' file ending.")
 
-
         return True
 
     def loadFromFile(self, path_in: str):
@@ -94,7 +90,6 @@ class ArenaScenario:
                 else:
                     raise Exception(
                         "wrong format. file needs to have 'json' or 'yaml' file ending.")
-
 
                 self.loadFromDict(data)
                 self.path = path_in
