@@ -1,9 +1,8 @@
 # arena-tools
 A collection of tools to make working with [Arena-Rosnav](https://github.com/ignc-research/arena-rosnav/) and [Arena-Rosnav-3D](https://github.com/ignc-research/arena-rosnav-3D/) easier. It currently includes:
-- Scenario Editor
-- Flatland Model Editor 
-- Map Generator (2D)
-- Complexity Metrics
+- [Scenario Editor](#map-generator)
+- [Flatland Model Editor](#flatland-model-editor)
+- [Map Generator (2D)](#scenario-editor)
 
 ## Prerequisites
 - Python 3.6 or higher
@@ -19,6 +18,8 @@ To start the gui and select your task, run:
 ```bash
 roscd arena-tools && python arena_tools.py
 ```
+
+
 # Map Generator
 How to create a custom map blueprint like shown here:
 
@@ -124,17 +125,3 @@ Click on the 'edit'-Button of the Body you want to edit. The Flatland Body Edito
 - Save body by clicking 'Save and Close'
 ### Circle Footprints
 Not yet implemented.
-
-# Mesure complexity of you map
-1. run: `roscd arena-tools`
-2. run: `python world_complexity.py --image_path {IMAGE_PATH} --yaml_path {YAML_PATH} --dest_path {DEST_PATH}`
-
-with:\
- IMAGE_PATH: path to the floor plan of your world. Usually in .pgm format\
- YAML_PATH: path to the .yaml description file of your floor plan\
- DEST_PATH: location to store the complexity data about your map
-
-Example launch:
-```bash
-python world_complexity.py --image_path ~/catkin_ws/src/forks/arena-tools/aws_house/map.pgm --yaml_path ~/catkin_ws/src/forks/arena-tools/aws_house/map.yaml --dest_path ~/catkin_ws/src/forks/arena-tools/aws_house
-```
