@@ -1,8 +1,8 @@
 # arena-tools
 A collection of tools to make working with [Arena-Rosnav](https://github.com/ignc-research/arena-rosnav/) and [Arena-Rosnav-3D](https://github.com/ignc-research/arena-rosnav-3D/) easier. It currently includes:
-- [Scenario Editor](#map-generator)
+- [Scenario Editor](#scenario-editor)
 - [Flatland Model Editor](#flatland-model-editor)
-- [Map Generator (2D)](#scenario-editor)
+- [Map Generator (2D)](#map-generator)
 
 ## Prerequisites
 - Python 3.6 or higher
