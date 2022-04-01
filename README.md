@@ -28,13 +28,14 @@ https://user-images.githubusercontent.com/74921738/130034174-fa6b334b-e220-47ea-
 
 
 
-1. Map Generator is a tool to generate random ROS maps. Firstly select map generator in the *arena-tools* menue. Or run `python MapGenerator.py`
+1. Map Generator is a tool to generate random ROS maps. Firstly select map generator in the *arena-tools* menu. Or run `python MapGenerator.py`
 
 > **NOTE:**
 >- Maps can be either an indoor or an outdoor type map. For **indoor** maps you can adjust the **Corridor With** and number of **Iterations**. For **outdoor** maps you can adjust the number of **Obstacles** and the **Obstacle Extra Radius**.
 >- Generate maps in bulk by setting **Number of Maps**
 >- Each map will be saved in its own folder. Folders will be named like "map[number]". [number] will be incremented starting from the highest number that already exists in the folder, so as not to overwrite any existing maps.
 
+2. If you want to create a Gazebo world from this map, see our documentation [here](map_to_gazebo/map_to_gazebo.md) 
 
 
 
