@@ -13,6 +13,8 @@ Creating a Gazebo map from the 2D occupancy map, created by *arena-tools* can be
 
 ❻ [Include the mesh into the world file and save the file](#6-include-the-mesh-into-the-world-file-and-save-the-file)
 
+---
+
 ### 1. Transform the `pgm` file into an `svg`
 
 ### 2. Open the `svg` in Blender
