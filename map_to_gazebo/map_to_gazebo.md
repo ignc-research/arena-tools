@@ -59,3 +59,7 @@ roscd simulator_setup/worlds/<var>WORLD_NAME</var>
 wget https://raw.githubusercontent.com/ignc-research/arena-tools/main/map_to_gazebo/map.world
 </pre>
 
+
+https://user-images.githubusercontent.com/82460419/161523914-8808b4cf-8965-4cf5-96d5-7a45b9d061c1.mp4
+
+
