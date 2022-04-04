@@ -19,7 +19,7 @@ Creating a Gazebo map from the 2D occupancy map, created by *arena-tools* can be
 Use *Incspace* to transform the image to an `svg`
 
 
-https://user-images.githubusercontent.com/82460419/161522683-c01f7e59-8cb9-42ee-ae4a-a05ecd40d13e.mp4
+https://user-images.githubusercontent.com/82460419/161525553-3b1c82d1-a3b3-4a16-a0b2-909dcf0a2b1e.mp4
 
 
 ### 2. Open the `svg` in Blender
