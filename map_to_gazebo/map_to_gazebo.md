@@ -18,6 +18,10 @@ Creating a Gazebo map from the 2D occupancy map, created by *arena-tools* can be
 ### 1. Transform the `pgm` file into an `svg`
 Use *Incspace* to transform the image to an `svg`
 
+
+https://user-images.githubusercontent.com/82460419/161522683-c01f7e59-8cb9-42ee-ae4a-a05ecd40d13e.mp4
+
+
 ### 2. Open the `svg` in Blender
 Open *Blender*, clear the scene and import the `svg`
 
@@ -45,7 +49,7 @@ The gazebo simulation-speed can be increased by decreasing the model complexity 
 > **NOTE**: Don't reduce the number to much, so that structural integrety of the map stays intact 
 
 
-
+https://user-images.githubusercontent.com/82460419/161522835-be7ad839-f736-4dae-8954-ab7ab5904904.mp4
 
 
 ### 6. Include the mesh into the world file and save the file
@@ -54,3 +58,4 @@ Create a new world folder under: <code>simulator_setup/worlds/<var>WORLD_NAME</v
 roscd simulator_setup/worlds/<var>WORLD_NAME</var>
 wget https://raw.githubusercontent.com/ignc-research/arena-tools/main/map_to_gazebo/map.world
 </pre>
+
