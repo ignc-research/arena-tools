@@ -35,7 +35,9 @@ https://user-images.githubusercontent.com/74921738/130034174-fa6b334b-e220-47ea-
 >- Generate maps in bulk by setting **Number of Maps**
 >- Each map will be saved in its own folder. Folders will be named like "map[number]". [number] will be incremented starting from the highest number that already exists in the folder, so as not to overwrite any existing maps.
 
-2. If you want to create a Gazebo world from this map, see our documentation [here](map_to_gazebo/map_to_gazebo.md) 
+2. If you want to create a Gazebo world from this map, see our documentation [here](map_to_gazebo/map_to_gazebo.md). Below you can find a short summary
+
+<img src="map_to_gazebo/example-videos/short-map-to-svg.gif">
 
 
 
