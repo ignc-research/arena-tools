@@ -20,6 +20,8 @@ Use *Incspace* to transform the image to an `svg`
 
 ### 2. Open the `svg` in Blender
 Open *Blender*, clear the scene and import the `svg`
+https://raw.githubusercontent.com/ignc-research/arena-tools/main/map_to_gazebo/example-videos/import%20svg.mp4
+
 ### 3. Scale and Extrude the `svg`
 When working with *arena-tools* worlds have a size of 25x25m. You can determine this by multiplying the resolution (pixel per meter) with the number of pixels.
 
