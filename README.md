@@ -13,6 +13,14 @@ Install Python packages (preferably in your virtual environment):
 pip3 install pyqt5 numpy pyyaml lxml scikit-image Pillow scikit-image opencv-python matplotlib
 pip install PyQt5 --upgrade
 ```
+If you wish to use our 2D map to 3D Gazebo world functionality follow these 2 additional steps:  
+\
+Install potrace to convert pgm images to SVG format:
+```bash
+sudo apt-get install potrace
+```
+Install Blender according to [documentation](https://docs.blender.org/manual/en/latest/getting_started/installing/linux.html), making sure that it can be run from the terminal.  
+Note: This feature was tested with Blender v3.1
 # Run
 To start the gui and select your task, run:
 ```bash
@@ -35,7 +43,7 @@ https://user-images.githubusercontent.com/74921738/130034174-fa6b334b-e220-47ea-
 >- Generate maps in bulk by setting **Number of Maps**
 >- Each map will be saved in its own folder. Folders will be named like "map[number]". [number] will be incremented starting from the highest number that already exists in the folder, so as not to overwrite any existing maps.
 
-2. If you want to create a Gazebo world from this map, see our documentation [here](map_to_gazebo/map_to_gazebo.md). Below you can find a short summary
+2. If you wish to create Gazebo worlds for all of the generated maps click on the 'Convert existing maps into Gazebo worlds' button, which automates the process, provided you followed the installation steps. Otherwise, you can have a look [here](map_to_gazebo/map_to_gazebo.md) on how to achieve this manually with the help of Blender. Below you can find a short summary
 
 <img src="map_to_gazebo/example-videos/short-map-to-svg.gif">
 
